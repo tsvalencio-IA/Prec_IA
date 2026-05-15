@@ -1,1 +1,83 @@
-<!doctype html><html><body>config.html</body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Configurar valor_IA</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{font-family:Arial,Helvetica,sans-serif;background:#f4f7fb;margin:0;color:#172033}main{max-width:980px;margin:auto;padding:18px}.card{background:white;border:1px solid #d9e2ef;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 10px 28px #0001}label{display:block;font-weight:800;margin:10px 0 5px;color:#46556b}input,textarea{width:100%;border:1px solid #d9e2ef;border-radius:12px;padding:10px;font-size:14px}textarea{min-height:150px}button{border:0;border-radius:12px;background:#2563eb;color:white;font-weight:900;padding:12px;margin:4px;cursor:pointer}.green{background:#15803d}.light{background:#dbeafe;color:#0f172a;border:1px solid #2563eb}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}pre{white-space:pre-wrap;background:#0f172a;color:white;border-radius:12px;padding:12px;overflow:auto}.muted{color:#64748b}
+</style>
+</head>
+<body>
+<main>
+<h1>Configurar cliente valor_IA</h1>
+<div class="card">
+<p class="muted">Cole o bloco Firebase ou preencha os campos. Depois baixe os arquivos gerados.</p>
+<label>Firebase config completo</label>
+<textarea id="cfg" placeholder='Cole aqui: const firebaseConfig = {...};'></textarea>
+<button class="light" onclick="fillFromBlock()">Ler bloco Firebase</button>
+<div class="grid">
+<div><label>apiKey</label><input id="apiKey"></div>
+<div><label>authDomain</label><input id="authDomain"></div>
+<div><label>databaseURL / Realtime Database</label><input id="databaseURL"></div>
+<div><label>projectId</label><input id="projectId"></div>
+<div><label>storageBucket</label><input id="storageBucket"></div>
+<div><label>messagingSenderId</label><input id="messagingSenderId"></div>
+<div><label>appId</label><input id="appId"></div>
+<div><label>Link GitHub Pages</label><input id="siteUrl"></div>
+<div><label>Email admin Firebase Auth</label><input id="adminEmail"></div>
+<div><label>Nome do estabelecimento</label><input id="businessName"></div>
+<div><label>WhatsApp do gestor</label><input id="managerPhone"></div>
+</div>
+<button class="green" onclick="generateFiles()">Gerar arquivos</button>
+</div>
+<div class="card">
+<h2>Arquivos gerados</h2>
+<button onclick="downloadFirebaseConfig()">Baixar firebase-config.js</button>
+<button onclick="downloadRobotConfig()">Baixar robo-config.json</button>
+<button onclick="downloadClientNotes()">Baixar DADOS_DO_CLIENTE.txt</button>
+<pre id="preview">Aguardando geração...</pre>
+</div>
+<p class="muted">Powered by thIAguinho Soluções Digitais</p>
+</main>
+<script>
+let generated = {};
+function parseConfig(text){
+  let t = String(text||"").trim();
+  t = t.replace(/^const\s+firebaseConfig\s*=\s*/,"").replace(/^let\s+firebaseConfig\s*=\s*/,"").replace(/^var\s+firebaseConfig\s*=\s*/,"").replace(/;\s*$/,"");
+  try { return Function("return ("+t+")")(); }
+  catch(e){ alert("Não consegui ler o bloco Firebase. Cole o bloco completo ou preencha manualmente."); throw e; }
+}
+function fillFromBlock(){
+  const c = parseConfig(document.getElementById("cfg").value);
+  apiKey.value=c.apiKey||"";
+  authDomain.value=c.authDomain||"";
+  databaseURL.value=c.databaseURL||"";
+  projectId.value=c.projectId||"";
+  storageBucket.value=c.storageBucket||"";
+  messagingSenderId.value=c.messagingSenderId||"";
+  appId.value=c.appId||"";
+}
+function generateFiles(){
+  const c = {apiKey:apiKey.value.trim(),authDomain:authDomain.value.trim(),databaseURL:databaseURL.value.trim(),projectId:projectId.value.trim(),storageBucket:storageBucket.value.trim(),messagingSenderId:messagingSenderId.value.trim(),appId:appId.value.trim()};
+  if(!c.apiKey || !c.databaseURL || !c.projectId){ alert("Preencha apiKey, databaseURL e projectId."); return; }
+  generated.firebaseConfig = `const firebaseConfig = ${JSON.stringify(c,null,2)};\n\nif (typeof window !== "undefined") window.firebaseConfig = firebaseConfig;\nif (typeof module !== "undefined") module.exports = firebaseConfig;\n`;
+  generated.robotConfig = JSON.stringify({siteUrl:siteUrl.value.trim(),adminEmail:adminEmail.value.trim(),businessName:businessName.value.trim(),managerPhone:managerPhone.value.trim(),signature:"Powered by thIAguinho Soluções Digitais"}, null, 2);
+  generated.notes = ["DADOS DO CLIENTE - valor_IA","","Estabelecimento: "+businessName.value.trim(),"GitHub Pages: "+siteUrl.value.trim(),"Email admin Firebase Auth: "+adminEmail.value.trim(),"WhatsApp gestor: "+managerPhone.value.trim(),"Projeto Firebase: "+c.projectId,"Realtime Database: "+c.databaseURL,"","Powered by thIAguinho Soluções Digitais"].join("\\n");
+  preview.textContent = "firebase-config.js\\n\\n"+generated.firebaseConfig+"\\n\\nrobo-config.json\\n\\n"+generated.robotConfig+"\\n\\nDADOS_DO_CLIENTE.txt\\n\\n"+generated.notes;
+}
+function download(name,text){
+  if(!text){ alert("Gere os arquivos primeiro."); return; }
+  const blob = new Blob([text],{type:"text/plain;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function downloadFirebaseConfig(){download("firebase-config.js", generated.firebaseConfig)}
+function downloadRobotConfig(){download("robo-config.json", generated.robotConfig)}
+function downloadClientNotes(){download("DADOS_DO_CLIENTE.txt", generated.notes)}
+</script>
+</body>
+</html>

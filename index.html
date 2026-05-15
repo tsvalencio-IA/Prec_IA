@@ -2,89 +2,255 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<title>valor_IA — Sistema Profissional de Cotações</title>
+<title>valor_IA — Plataforma Profissional de Cotações</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="firebase-config.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<style>
-:root{--bg:#f4f7fb;--card:#fff;--line:#d9e2ef;--text:#172033;--muted:#64748b;--blue:#2563eb;--green:#15803d;--red:#dc2626;--amber:#b45309;--soft:#f8fafc;--dark:#111827}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Arial,Helvetica,sans-serif;color:var(--text)}header{background:linear-gradient(120deg,#fff,#eef5ff);border-bottom:1px solid var(--line);padding:18px}.headerIn{max-width:1280px;margin:auto;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.logo{display:flex;gap:12px;align-items:center}.icon{width:56px;height:56px;border-radius:18px;background:white;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 8px 22px #0001}h1{font-size:24px;margin:0}.subtitle{color:var(--muted);margin:4px 0 0}.pill{display:inline-block;border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 9px;font-size:12px;margin:2px}
-main{max-width:1280px;margin:auto;padding:16px}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.tab{border:1px solid var(--line);background:#eef4fb;border-radius:14px;padding:11px 14px;font-weight:800;cursor:pointer}.tab.active{background:var(--blue);color:white}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 10px 28px rgba(15,23,42,.07);padding:16px;margin-bottom:14px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}label{display:block;margin:9px 0 5px;font-weight:800;color:#46556b;font-size:13px}input,textarea,select{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px;font-size:14px;background:#fff}textarea{min-height:90px}button{border:0;border-radius:12px;padding:10px 13px;font-weight:900;cursor:pointer;background:var(--blue);color:white;margin:3px}button.light{background:#eef4fb;color:#243349;border:1px solid var(--line)}button.green{background:var(--green)}button.red{background:var(--red)}button.dark{background:var(--dark)}button.amber{background:var(--amber)}
-.muted{color:var(--muted)}.ok{color:var(--green);font-weight:900}.bad{color:var(--red);font-weight:900}.warn{color:var(--amber);font-weight:900}.small{font-size:12px}.kpi{font-size:30px;font-weight:900}table{width:100%;border-collapse:collapse;background:white}th,td{border-bottom:1px solid var(--line);padding:8px;text-align:left;vertical-align:top;font-size:13px}th{background:#f8fafc}.tablewrap{overflow:auto}.quote{border:1px solid var(--line);border-radius:16px;background:white;padding:14px;margin:12px 0}.closed{opacity:.75;background:#f5f5f5}.canceled{opacity:.55;background:#fff1f2}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.hidden{display:none!important}.checkboxCard{border:1px solid var(--line);background:#f8fafc;border-radius:14px;padding:10px}
-.loginOverlay{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0f172a,#1d4ed8);display:flex;align-items:center;justify-content:center;padding:16px}.loginBox{width:min(440px,100%);background:white;border-radius:22px;padding:22px;box-shadow:0 24px 70px #0005}.loginLogo{width:60px;height:60px;border-radius:20px;background:#eef5ff;display:flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:10px}.authHidden{display:none!important}.footer{text-align:center;padding:24px;color:var(--muted)}pre{white-space:pre-wrap;background:#f8fafc;border-radius:10px;padding:10px}.notice{border:1px solid #bfdbfe;background:#eff6ff;border-radius:14px;padding:12px;color:#1e3a8a}.dangerBox{border:1px solid #fecaca;background:#fff1f2;border-radius:14px;padding:12px;color:#991b1b}.nicheCard{border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px;display:flex;gap:8px;align-items:flex-start}.nicheIcon{font-size:26px;width:36px}
-@media(max-width:760px){main{padding:10px}.grid2{grid-template-columns:1fr}.tabs{overflow-x:auto;flex-wrap:nowrap}.tab{white-space:nowrap}.card{padding:13px}}
-body.theme-dark{--bg:#0f172a;--card:#111827;--line:#334155;--text:#f8fafc;--muted:#cbd5e1;--blue:#38bdf8;--green:#22c55e;--red:#f87171;--amber:#f59e0b;--soft:#1f2937;--dark:#020617}body.theme-dark input,body.theme-dark textarea,body.theme-dark select{background:#0b1220;color:var(--text);border-color:var(--line)}body.theme-dark table,body.theme-dark .quote,body.theme-dark .card{background:var(--card);color:var(--text)}body.theme-dark th{background:#0b1220}
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div id="loginOverlay" class="loginOverlay"><div class="loginBox"><div class="loginLogo">🔐</div><h2>Entrar no valor_IA</h2><p class="muted">Use o e-mail e senha criados no Firebase Authentication.</p><label>E-mail</label><input id="loginEmail" type="email" autocomplete="username"><label>Senha</label><input id="loginPassword" type="password" autocomplete="current-password"><button class="green" id="loginBtn">Entrar</button><p id="loginError" class="bad small"></p><p class="muted small">Powered by thIAguinho Soluções Digitais</p></div></div>
-<header><div class="headerIn"><div class="logo"><div class="icon" id="brandIcon">🧾</div><div><h1 id="brandTitle">valor_IA — Sistema Profissional de Cotações</h1><p class="subtitle" id="brandSubtitle">Configuração, nichos, fornecedores, banco de preços, cotações, compras e robô.</p></div></div><div class="row"><span class="pill">Powered by thIAguinho Soluções Digitais</span><button class="dark" id="logoutBtn">Sair</button></div></div></header>
+<div id="loginOverlay" class="loginOverlay">
+  <div class="loginBox">
+    <div class="loginLogo">🔐</div>
+    <h2>Entrar no valor_IA</h2>
+    <p class="muted">Use o e-mail e senha criados no Firebase Authentication.</p>
+    <label>E-mail</label><input id="loginEmail" type="email" autocomplete="username">
+    <label>Senha</label><input id="loginPassword" type="password" autocomplete="current-password">
+    <button class="green" id="loginBtn">Entrar</button>
+    <p id="loginError" class="bad small"></p>
+    <p class="muted small">Powered by thIAguinho Soluções Digitais</p>
+  </div>
+</div>
+
+<header>
+  <div class="headerIn">
+    <div class="logo">
+      <div class="icon" id="brandIcon">🧾</div>
+      <div>
+        <h1 id="brandTitle">valor_IA — Plataforma Profissional de Cotações</h1>
+        <p class="subtitle" id="brandSubtitle">Cotações, compras, fornecedores, histórico e robô WhatsApp por nicho.</p>
+      </div>
+    </div>
+    <div class="row">
+      <span class="pill">Powered by thIAguinho Soluções Digitais</span>
+      <button class="dark" id="logoutBtn">Sair</button>
+    </div>
+  </div>
+</header>
+
 <main>
-<div class="tabs"><button class="tab active" data-tab="inicio">Início</button><button class="tab" data-tab="configcliente">Config. Cliente</button><button class="tab" data-tab="estabelecimento">Estabelecimento</button><button class="tab" data-tab="nichos">Nichos</button><button class="tab" data-tab="fornecedores">Fornecedores</button><button class="tab" data-tab="precos">Banco de preços</button><button class="tab" data-tab="novo">Novo orçamento</button><button class="tab" data-tab="cotacoes">Cotações</button><button class="tab" data-tab="compras">Compras</button><button class="tab" data-tab="robo">Robô</button><button class="tab" data-tab="debug">Diagnóstico</button></div>
-<section id="inicio" class="tabpage"><div class="grid"><div class="card"><h2>Abertas</h2><div class="kpi" id="kpiOpen">0</div></div><div class="card"><h2>Total</h2><div class="kpi" id="kpiQuotes">0</div></div><div class="card"><h2>Fornecedores</h2><div class="kpi" id="kpiSuppliers">0</div></div><div class="card"><h2>Fila robô</h2><div class="kpi" id="kpiQueue">0</div></div></div><div class="card"><h2>Últimas cotações</h2><div id="homeQuotes"></div></div></section>
-<section id="configcliente" class="tabpage hidden"><div class="card"><h2>Configuração do cliente / implantação</h2><div class="grid"><div><label>Projeto Firebase</label><input id="clientProjectId"></div><div><label>Realtime Database URL</label><input id="clientDbUrl"></div><div><label>Link GitHub Pages</label><input id="clientSiteUrl"></div><div><label>Email admin Firebase Auth</label><input id="clientAdminEmail"></div><div><label>Nome do cliente</label><input id="clientName"></div><div><label>WhatsApp gestor</label><input id="clientManagerPhone"></div></div><button class="green" onclick="saveClientSetup()">Salvar dados do cliente</button></div></section>
-<section id="estabelecimento" class="tabpage hidden"><div class="card"><h2>Estabelecimento</h2><div class="grid"><div><label>Nome do estabelecimento</label><input id="setName"></div><div><label>WhatsApp da loja</label><input id="setPhone"></div><div><label>WhatsApp do gestor para avisos</label><input id="setManagerPhone"></div><div><label>Cidade/UF</label><input id="setCity"></div><div><label>Responsável</label><input id="setOwner"></div><div><label>Nicho</label><select id="setNiche"></select></div><div><label>Tema</label><select id="setTheme"><option value="light">Claro</option><option value="dark">Escuro</option></select></div><div><label>Ícone personalizado</label><input id="setIcon"></div></div><label>Mensagem padrão de cotação</label><textarea id="setMessage"></textarea><button class="green" onclick="saveSettings()">Salvar estabelecimento</button></div></section>
-<section id="nichos" class="tabpage hidden"><div class="card"><h2>Nichos disponíveis</h2><div id="nicheList" class="grid"></div></div></section>
-<section id="fornecedores" class="tabpage hidden"><div class="card"><h2>Fornecedores</h2><div class="grid"><div><label>Nome</label><input id="supName"></div><div><label>WhatsApp</label><input id="supPhone"></div><div><label>Tipos/categorias</label><input id="supTypes"></div><div><label>Observação</label><input id="supObs"></div></div><button class="green" onclick="saveSupplier()">Salvar fornecedor</button><div id="suppliersList"></div></div></section>
-<section id="precos" class="tabpage hidden"><div class="card"><h2>Banco de preços</h2><div class="grid"><div><label>Fornecedor</label><select id="priceSupplier"></select></div><div><label>Código original/OEM</label><input id="priceOem"></div><div><label>Descrição</label><input id="priceDesc"></div><div><label>Marca</label><input id="priceBrand"></div><div><label>Código da marca</label><input id="priceBrandCode"></div><div><label>Preço conhecido</label><input id="priceValue"></div><div><label>Disponibilidade</label><input id="priceAvailability"></div></div><label>Observação</label><input id="priceObs"><button class="green" onclick="savePrice()">Salvar preço</button><hr><div class="grid"><div><label>Pesquisar</label><input id="priceSearch" oninput="renderPrices()"></div></div><div id="priceList"></div></div></section>
-<section id="novo" class="tabpage hidden"><div class="card"><h2 id="quoteFormTitle">Novo orçamento / cotação</h2><div class="grid"><div><label>Número OS/cotação</label><input id="quoteNumber"></div><div><label>Cliente/referência</label><input id="vehCustomer"></div><div><label>Marca</label><input id="vehBrand"></div><div><label>Modelo</label><input id="vehModel"></div><div><label>Ano</label><input id="vehYear"></div><div><label>Placa</label><input id="vehPlate"></div><div><label>Chassi</label><input id="vehChassi"></div><div><label>KM</label><input id="vehKm"></div><div><label>Prefixo/frota</label><input id="vehPrefix"></div></div><label>Observação</label><textarea id="vehObs"></textarea><h3>Importar planilha</h3><input id="fileXlsx" type="file" accept=".xlsx,.xls,.csv"><button class="light" onclick="importXlsx()">Importar peças</button><h3>Adicionar peça manual</h3><div class="grid"><div><label>Código original/OEM</label><input id="itemOem"></div><div><label>Código alternativo</label><input id="itemAlt"></div><div><label>Descrição</label><input id="itemDesc"></div><div><label>Qtd</label><input id="itemQty" value="1"></div><div><label>Preço venda/base unitário</label><input id="itemSale"></div><div><label>Tipo</label><input id="itemType"></div></div><button class="light" onclick="addDraftItem()">Adicionar peça</button><button class="green" onclick="saveQuote()">Salvar orçamento/cotação</button><button class="light" onclick="clearQuoteForm()">Limpar formulário</button><div id="draftItems"></div></div></section>
-<section id="cotacoes" class="tabpage hidden"><div class="card"><h2>Cotações</h2><div id="quotesList">Carregando...</div></div></section>
-<section id="compras" class="tabpage hidden"><div class="card"><h2>Ordens de compra</h2><div id="ordersList"></div></div></section>
-<section id="robo" class="tabpage hidden"><div class="card"><h2>Fila do robô</h2><div id="robotQueue"></div></div></section>
-<section id="debug" class="tabpage hidden"><div class="card"><h2>Diagnóstico</h2><div id="debugBox"></div></div></section>
-</main><div class="footer">Powered by thIAguinho Soluções Digitais</div>
-<script>
-var db=null,currentUser=null,editing=null;var quotes={},cotacoes={},respostas={},suppliers={},fornecedores={},whatsappQueue={},purchaseOrders={},ordensCompra={},settings={},clientSetup={},priceDb={},robotStatus={},draftItems=[];
-const ASSINATURA="Powered by thIAguinho Soluções Digitais";
-const DEFAULT_MSG=`Olá {fornecedor}, aqui é {estabelecimento}.\n\nCotação {cotacao} - {veiculo} {placa}\nSão {qtd} item(ns).\n\nConfirme disponibilidade, marca, código da marca, descrição, preço atual e prazo pelo link:\n{link}\n\n{assinatura}`;function applyTheme(t){document.body.classList.toggle("theme-dark",t==="dark");try{localStorage.setItem("valorIA_theme",t||"light")}catch(e){}}
-const NICHOS=[["autopecas","🔧","Autopeças / Oficina / Frota","Cotação de peças automotivas, OS, compra e lucro."],["construcao","🧱","Materiais de construção","Cimento, tubos, elétrica, hidráulica e acabamento."],["farmacia","💊","Farmácia / Drogaria","Produtos de giro, perfumaria e reposição."],["agro_pet","🐾","Agropecuária / Pet shop","Rações, sementes, ferramentas e insumos."],["informatica","💻","Informática / Eletrônicos","Peças, periféricos, manutenção e revenda."],["mercado","🛒","Mercado / Mercearia","Produtos de giro, bebidas, limpeza e frios."],["papelaria","📚","Papelaria / Escritório","Material escolar, escritório, toner e suprimentos."],["restaurante","🍽️","Restaurante / Food service","Alimentos, embalagens, bebidas e insumos."],["hotelaria","🏨","Hotel / Pousada","Enxoval, limpeza, manutenção e amenidades."],["estetica","💅","Estética / Salão / Barbearia","Cosméticos, equipamentos, descartáveis e reposição."],["marcenaria","🪵","Marcenaria / Móveis","Chapas, ferragens, cola, fita de borda e acessórios."],["ferragens","🔩","Ferragens / Metalúrgica","Parafusos, chapas, barras, ferramentas e EPI."],["eletricos","⚡","Elétrica / Iluminação","Cabos, disjuntores, lâmpadas, luminárias e quadros."],["hidraulica","🚰","Hidráulica / Piscina","Tubos, conexões, bombas, registros e produtos químicos."],["limpeza","🧼","Limpeza / Higiene","Químicos, descartáveis, papel, sacos e equipamentos."],["epi","🥽","Uniformes / EPI","Luvas, botas, capacetes, uniformes e sinalização."],["eventos","🎪","Eventos / Festas","Buffet, decoração, locação, som, iluminação e bebidas."],["clinicas","🦷","Clínicas / Odonto","Materiais clínicos, descartáveis, manutenção e limpeza."],["transportes","🚚","Transportes / Logística","Pneus, manutenção, peças, combustível e insumos."],["generico","🧾","Cotação genérica","Qualquer compra com fornecedores e comparação de preços."]];
-function $(id){return document.getElementById(id)}function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}function money(v){return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}function parseMoney(v){let s=String(v||"").replace(/[^\d,.-]/g,"").trim();if(!s)return 0;if(s.includes(",")&&s.includes("."))s=s.replace(/\./g,"").replace(",",".");else if(s.includes(","))s=s.replace(",",".");let n=Number(s);return Number.isFinite(n)?n:0}function arrObj(o){return Object.entries(o||{}).map(([id,v])=>({id,...(v||{})}))}function statusOpen(s){return ["open","aberta","aberto","enviada","importada"].includes(String(s||"").toLowerCase())}function phoneBR(p){let d=String(p||"").replace(/\D/g,"");if(d.length===10||d.length===11)d="55"+d;return d}function uid(p){return p+"_"+Date.now()+"_"+Math.random().toString(16).slice(2,8)}function showTab(id){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===id));document.querySelectorAll(".tabpage").forEach(p=>p.classList.toggle("hidden",p.id!==id))}document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
-$("loginBtn").onclick=()=>{const email=$("loginEmail").value.trim(),pass=$("loginPassword").value,err=$("loginError");err.textContent="";if(!email||!pass){err.textContent="Preencha e-mail e senha.";return}firebase.auth().signInWithEmailAndPassword(email,pass).catch(e=>err.textContent="Falha no login: "+(e.message||e.code))};$("logoutBtn").onclick=()=>firebase.auth().signOut();$("loginPassword").addEventListener("keydown",e=>{if(e.key==="Enter")$("loginBtn").click()});
-function init(){renderNiches();if(!window.firebaseConfig){alert("firebase-config.js não carregou.");return}if(!firebase.apps.length)firebase.initializeApp(window.firebaseConfig);firebase.auth().onAuthStateChanged(user=>{currentUser=user;$("loginOverlay").classList.toggle("authHidden",!!user);if(user&&!db)startApp()})}
-function startApp(){db=firebase.database();db.ref("settings/main").on("value",s=>{settings=s.val()||{};fillSettings();renderAll()});db.ref("clientSetup").on("value",s=>{clientSetup=s.val()||{};fillClientSetup();renderAll()});db.ref("quotes").on("value",s=>{quotes=s.val()||{};renderAll()});db.ref("cotacoes").on("value",s=>{cotacoes=s.val()||{};renderAll()});db.ref("respostas").on("value",s=>{respostas=s.val()||{};renderAll()});db.ref("suppliers").on("value",s=>{suppliers=s.val()||{};renderAll()});db.ref("fornecedores").on("value",s=>{fornecedores=s.val()||{};renderAll()});db.ref("whatsappQueue").on("value",s=>{whatsappQueue=s.val()||{};renderAll()});db.ref("purchaseOrders").on("value",s=>{purchaseOrders=s.val()||{};renderAll()});db.ref("ordensCompra").on("value",s=>{ordensCompra=s.val()||{};renderAll()});db.ref("priceDb").on("value",s=>{priceDb=s.val()||{};renderAll()});db.ref("robotStatus/main").on("value",s=>{robotStatus=s.val()||{};renderAll()})}
-function renderNiches(){$("setNiche").innerHTML=NICHOS.map(n=>`<option value="${n[0]}">${n[1]} ${n[2]}</option>`).join("");$("nicheList").innerHTML=NICHOS.map(n=>`<div class="nicheCard"><div class="nicheIcon">${n[1]}</div><div><b>${n[2]}</b><br><span class="muted small">${n[3]}</span></div></div>`).join("")}
-function fillClientSetup(){if(document.activeElement&&String(document.activeElement.id||"").startsWith("client"))return;$("clientProjectId").value=clientSetup.projectId||"";$("clientDbUrl").value=clientSetup.databaseURL||"";$("clientSiteUrl").value=clientSetup.siteUrl||"";$("clientAdminEmail").value=clientSetup.adminEmail||"";$("clientName").value=clientSetup.businessName||"";$("clientManagerPhone").value=clientSetup.managerPhone||""}
-function saveClientSetup(){db.ref("clientSetup").update({projectId:$("clientProjectId").value.trim(),databaseURL:$("clientDbUrl").value.trim(),siteUrl:$("clientSiteUrl").value.trim(),adminEmail:$("clientAdminEmail").value.trim(),businessName:$("clientName").value.trim(),managerPhone:$("clientManagerPhone").value.trim(),updatedAt:Date.now(),signature:ASSINATURA}).then(()=>alert("Dados do cliente salvos."))}
-function currentNiche(){return NICHOS.find(n=>n[0]===(settings.niche||"autopecas"))||NICHOS[0]}function fillSettings(){const n=currentNiche();$("brandIcon").textContent=settings.customIcon||n[1];$("brandTitle").textContent=(settings.name||"valor_IA")+" — Sistema Profissional de Cotações";$("brandSubtitle").textContent=n[3];if(document.activeElement&&String(document.activeElement.id||"").startsWith("set"))return;$("setName").value=settings.name||settings.nome||"";$("setPhone").value=settings.phone||settings.whatsapp||"";$("setManagerPhone").value=settings.managerPhone||"";$("setCity").value=settings.city||"";$("setOwner").value=settings.owner||"";$("setNiche").value=settings.niche||"autopecas";if($("setTheme"))$("setTheme").value=settings.theme||localStorage.getItem("valorIA_theme")||"light";applyTheme(settings.theme||localStorage.getItem("valorIA_theme")||"light");$("setIcon").value=settings.customIcon||"";$("setMessage").value=settings.messageTemplate||DEFAULT_MSG}
-function saveSettings(){db.ref("settings/main").update({name:$("setName").value.trim(),phone:$("setPhone").value.trim(),managerPhone:$("setManagerPhone").value.trim(),city:$("setCity").value.trim(),owner:$("setOwner").value.trim(),niche:$("setNiche").value,theme:$("setTheme")?$("setTheme").value:"light",customIcon:$("setIcon").value.trim(),messageTemplate:$("setMessage").value.trim()||DEFAULT_MSG,updatedAt:Date.now(),signature:ASSINATURA}).then(()=>{applyTheme($("setTheme")?$("setTheme").value:"light");alert("Estabelecimento salvo.")})}
-function saveSupplier(){const id=uid("sup");db.ref("suppliers/"+id).set({id,name:$("supName").value.trim(),phone:phoneBR($("supPhone").value),types:$("supTypes").value.split(",").map(x=>x.trim().toLowerCase()).filter(Boolean),obs:$("supObs").value.trim(),active:true,createdAt:Date.now(),signature:ASSINATURA}).then(()=>{["supName","supPhone","supTypes","supObs"].forEach(i=>$(i).value="")})}
-function supplierName(id,q){if(suppliers[id])return suppliers[id].name||suppliers[id].nome||id;if(fornecedores[id])return fornecedores[id].nome||fornecedores[id].name||id;if(q&&q.raw&&q.raw.fornecedores&&q.raw.fornecedores[id])return q.raw.fornecedores[id].nome||id;return id||"Fornecedor"}
-function normNew(id,q){const items=(q.items||[]).map((it,idx)=>({id:it.id||("item_"+idx),seq:it.seq||idx+1,oem:it.oem||it.codigoOriginal||"",altCode:it.altCode||"",desc:it.desc||it.descricaoOriginal||"",qty:Number(it.qty||it.quantidade||1),type:it.type||it.tipo||"geral",saleUnit:Number(it.saleUnit||it.valorUnitarioPlanilha||0),saleTotal:Number(it.saleTotal||it.totalLiquidoPlanilha||((it.saleUnit||0)*(it.qty||1))||0),raw:it}));return{id,source:"quotes",raw:q,number:q.number||q.numero||id,status:q.status||"open",createdAt:q.createdAt||q.updatedAt||0,vehicle:q.vehicle||q.veiculo||{},items,responses:q.responses||{},rawReplies:q.whatsappRawReplies||{}}}
-function normOld(id,q){const items=Object.entries(q.pecas||{}).map(([pid,it],idx)=>({id:it.id||pid,seq:it.ordem||idx+1,oem:it.codigoOriginal||it.oem||"",altCode:"",desc:it.descricaoOriginal||it.desc||"",qty:Number(it.quantidade||it.qty||1),type:it.tipo||"geral",saleUnit:Number(it.valorUnitarioPlanilha||0),saleTotal:Number(it.totalLiquidoPlanilha||0),raw:it})).sort((a,b)=>(a.seq||0)-(b.seq||0));return{id,source:"cotacoes",raw:q,number:q.numero||q.number||id,status:q.status||"aberta",createdAt:q.criadaEm?Date.parse(q.criadaEm):0,vehicle:q.veiculo||{},items,responses:respostas[id]||q.responses||{},rawReplies:q.whatsappRawReplies||{}}}
-function allQuotes(){const list=[];Object.entries(quotes||{}).forEach(([id,q])=>list.push(normNew(id,q||{})));Object.entries(cotacoes||{}).forEach(([id,q])=>list.push(normOld(id,q||{})));return list.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))}
-function responsesForItem(q,item){const rows=[];Object.entries(q.responses||{}).forEach(([sid,byItem])=>{const r=(byItem||{})[item.id];if(!r)return;const available=r.available!==undefined?r.available!==false:r.temDisponivel!==false;rows.push({supplierId:sid,supplierName:r.fornecedorNome||supplierName(sid,q),available,brand:r.brand||r.marca||"",brandCode:r.brandCode||r.codigoMarca||"",desc:r.desc||r.descricaoFornecedor||"",price:Number(r.price||r.precoUnitario||r.preco||0),availability:r.availability||r.disponibilidade||"",obs:r.obs||r.observacao||"",raw:r.raw||r.rawText||r.text||"",source:r.source||r.origem||"formulário",updatedAt:r.updatedAt||r.atualizadoEm||r.receivedAt||null})});rows.sort((a,b)=>{if(a.available!==b.available)return a.available?-1:1;return(a.price||999999999)-(b.price||999999999)});return rows}
-function bestForItem(q,item){return responsesForItem(q,item).filter(r=>r.available&&r.price>0)[0]||null}
-function renderAll(){const qs=allQuotes();$("kpiOpen").textContent=qs.filter(q=>statusOpen(q.status)).length;$("kpiQuotes").textContent=qs.length;$("kpiSuppliers").textContent=arrObj(suppliers).length+arrObj(fornecedores).length;$("kpiQueue").textContent=arrObj(whatsappQueue).filter(x=>["pending","sending"].includes(x.status)).length;renderHome(qs);renderSuppliers();renderPrices();renderQuotes(qs);renderQueue();renderOrders();renderDebug(qs)}
-function renderHome(qs){$("homeQuotes").innerHTML=qs.slice(0,6).map(q=>`<div class="quote"><b>${esc(q.number)}</b> — ${esc(q.source)} — ${esc(q.status)} — ${q.items.length} item(ns)</div>`).join("")||"<p class='muted'>Sem cotações.</p>"}
-function renderSuppliers(){const list=[...arrObj(suppliers).map(s=>({...s,root:"suppliers"})),...arrObj(fornecedores).map(s=>({...s,root:"fornecedores"}))];$("suppliersList").innerHTML=list.length?`<div class="tablewrap"><table><thead><tr><th>Nome</th><th>WhatsApp</th><th>Tipos</th><th>Obs.</th><th>Origem</th></tr></thead><tbody>${list.map(s=>`<tr><td>${esc(s.name||s.nome||s.id)}</td><td>${esc(s.phone||s.whatsapp||"")}</td><td>${esc((s.types||s.tipos||[]).join(", "))}</td><td>${esc(s.obs||"")}</td><td>${s.root}</td></tr>`).join("")}</tbody></table></div>`:"<p class='muted'>Sem fornecedores.</p>";$("priceSupplier").innerHTML='<option value="">Selecione</option>'+list.map(s=>`<option value="${s.id}">${esc(s.name||s.nome||s.id)}</option>`).join("")}
-function savePrice(){const id=uid("price");db.ref("priceDb/"+id).set({supplierId:$("priceSupplier").value,oem:$("priceOem").value,desc:$("priceDesc").value,brand:$("priceBrand").value,brandCode:$("priceBrandCode").value,price:parseMoney($("priceValue").value),availability:$("priceAvailability").value,obs:$("priceObs").value,updatedAt:Date.now(),signature:ASSINATURA}).then(()=>alert("Preço salvo."))}
-function renderPrices(){const q=String($("priceSearch")?.value||"").toLowerCase();const list=arrObj(priceDb).filter(p=>!q||[p.oem,p.desc,p.brand,p.brandCode,supplierName(p.supplierId)].join(" ").toLowerCase().includes(q));$("priceList").innerHTML=list.length?`<div class="tablewrap"><table><thead><tr><th>Produto</th><th>Fornecedor</th><th>Marca</th><th>Preço</th><th>Disp.</th></tr></thead><tbody>${list.map(p=>`<tr><td><b>${esc(p.desc)}</b><br>${esc(p.oem)}</td><td>${esc(supplierName(p.supplierId))}</td><td>${esc(p.brand||"-")} ${esc(p.brandCode||"")}</td><td>${money(p.price)}</td><td>${esc(p.availability||"-")}</td></tr>`).join("")}</tbody></table></div>`:"<p class='muted'>Sem preços.</p>"}
-function renderQuotes(qs){$("quotesList").innerHTML=qs.length?qs.map(q=>{const answered=q.items.filter(it=>!!bestForItem(q,it)).length;let lucro=0;q.items.forEach(it=>{const b=bestForItem(q,it);if(b)lucro+=Number(it.saleTotal||0)-(b.price*Number(it.qty||1))});const v=q.vehicle||{};return`<div class="quote ${String(q.status).toLowerCase().includes('cancel')?'canceled':(statusOpen(q.status)?"":"closed")}"><h3>${esc(q.number)} <span class="pill">${esc(q.source)}</span> <span class="pill">${esc(q.status)}</span></h3><p class="muted">${esc([v.marca||v.brand,v.modelo||v.model,v.ano||v.year,v.placa||v.plate].filter(Boolean).join(" "))} — ${q.items.length} item(ns) — respondidos ${answered}/${q.items.length}</p><p><b>Lucro estimado:</b> <span class="${lucro>=0?'ok':'bad'}">${money(lucro)}</span></p><div class="row"><button onclick="showComparison('${q.source}','${q.id}')">Comparar respostas</button><button class="light" onclick="showItems('${q.source}','${q.id}')">Ver peças</button><button class="light" onclick="showRaw('${q.source}','${q.id}')">Respostas WhatsApp</button><button class="light" onclick="showSend('${q.source}','${q.id}')">Enviar fornecedores</button><button class="green" onclick="generateOC('${q.source}','${q.id}')">Gerar OC</button><button class="light" onclick="editQuote('${q.source}','${q.id}')">Editar</button>${statusOpen(q.status)?`<button class="amber" onclick="setQuoteStatus('${q.source}','${q.id}','fechada')">Encerrar</button><button class="red" onclick="setQuoteStatus('${q.source}','${q.id}','cancelada')">Cancelar</button>`:`<button class="green" onclick="setQuoteStatus('${q.source}','${q.id}','aberta')">Reabrir</button>`}<button class="red" onclick="deleteQuote('${q.source}','${q.id}')">Excluir</button></div><div id="detail_${q.source}_${q.id}"></div></div>`}).join(""):"<p class='muted'>Nenhuma cotação criada.</p>"}
-function getQuote(source,id){return allQuotes().find(q=>q.source===source&&q.id===id)}
-function showComparison(source,id){const q=getQuote(source,id);if(!q)return;let html=`<div class="card" style="box-shadow:none"><h3>Comparação completa</h3><div class="tablewrap"><table><thead><tr><th>Peça</th><th>Fornecedor</th><th>Marca</th><th>Cód. marca</th><th>Descrição fornecedor</th><th>Unit.</th><th>Total</th><th>Prazo</th><th>Obs./bruto</th></tr></thead><tbody>`;q.items.forEach(it=>{const rows=responsesForItem(q,it),qty=Number(it.qty||1);if(!rows.length){html+=`<tr><td><b>${esc(it.desc)}</b><br>${esc(it.oem)} | Qtd ${qty}</td><td colspan="8"><span class="bad">Sem resposta</span></td></tr>`;return}rows.forEach((r,idx)=>{html+=`<tr><td>${idx===0?`<b>${esc(it.desc)}</b><br><span class="muted">${esc(it.oem)} | Qtd ${qty}</span>`:""}</td><td><b>${esc(r.supplierName)}</b><br><span class="muted">${esc(r.source)}</span></td><td>${r.available?esc(r.brand||"-"):"<span class='bad'>Não tem</span>"}</td><td>${esc(r.brandCode||"-")}</td><td>${esc(r.desc||"-")}</td><td>${r.price?money(r.price):"-"}</td><td>${r.price?money(r.price*qty):"-"}</td><td>${esc(r.availability||"-")}</td><td>${esc(r.obs||"-")}${r.raw?`<br><span class="muted">Bruto: ${esc(r.raw)}</span>`:""}</td></tr>`})});html+=`</tbody></table></div><p class="muted small">${ASSINATURA}</p></div>`;$(`detail_${source}_${id}`).innerHTML=html}
-function showItems(source,id){const q=getQuote(source,id);if(!q)return;let html=`<div class="card" style="box-shadow:none"><h3>Peças</h3><div class="tablewrap"><table><thead><tr><th>#</th><th>Código</th><th>Descrição</th><th>Qtd</th><th>Venda/base</th><th>Tipo</th></tr></thead><tbody>`;q.items.forEach(it=>html+=`<tr><td>${it.seq}</td><td>${esc(it.oem)}</td><td>${esc(it.desc)}</td><td>${it.qty}</td><td>${money(it.saleTotal)}</td><td>${esc(it.type)}</td></tr>`);html+=`</tbody></table></div></div>`;$(`detail_${source}_${id}`).innerHTML=html}
-function showRaw(source,id){const q=getQuote(source,id);if(!q)return;const raws=Object.entries(q.rawReplies||{}).sort((a,b)=>(b[1].receivedAt||0)-(a[1].receivedAt||0));let html=`<div class="card" style="box-shadow:none"><h3>Respostas diretas no WhatsApp</h3>`;if(!raws.length)html+=`<p class="muted">Nenhuma resposta direta registrada.</p>`;raws.forEach(([rid,r])=>html+=`<div class="quote"><b>${esc(r.supplierName||supplierName(r.supplierId,q))}</b><br><span class="muted">${r.receivedAt?new Date(r.receivedAt).toLocaleString("pt-BR"):""} — ${esc(r.parseStatus||"")}</span><pre>${esc(r.text||"")}</pre></div>`);html+=`</div>`;$(`detail_${source}_${id}`).innerHTML=html}
-function showSend(source,id){const q=getQuote(source,id);if(!q)return;const list=[...arrObj(suppliers).map(s=>({...s,phone:s.phone,name:s.name})),...arrObj(fornecedores).map(s=>({...s,phone:s.whatsapp,name:s.nome}))];let html=`<div class="card" style="box-shadow:none"><h3>Enviar para fornecedores</h3><div class="grid">`;list.forEach(s=>html+=`<label class="checkboxCard"><input type="checkbox" class="send_${source}_${id}" value="${s.id}"> <b>${esc(s.name||s.nome||s.id)}</b><br><span class="muted">${esc(s.phone||s.whatsapp||"")}</span></label>`);html+=`</div><button onclick="enqueueSelected('${source}','${id}')">Enviar selecionados com robô</button></div>`;$(`detail_${source}_${id}`).innerHTML=html}
-function quoteLink(source,id,sid){return location.origin+location.pathname.replace(/index\.html.*$/,"")+`fornecedor.html?source=${encodeURIComponent(source)}&q=${encodeURIComponent(id)}&s=${encodeURIComponent(sid)}`}
-function buildMessage(q,sid,s){const link=quoteLink(q.source,q.id,sid);return (settings.messageTemplate||DEFAULT_MSG).replaceAll("{fornecedor}",s.name||s.nome||"Fornecedor").replaceAll("{estabelecimento}",settings.name||"Estabelecimento").replaceAll("{cotacao}",q.number||q.id).replaceAll("{veiculo}",q.vehicle?.modelo||q.vehicle?.model||"").replaceAll("{placa}",q.vehicle?.placa||q.vehicle?.plate||"").replaceAll("{qtd}",q.items.length).replaceAll("{link}",link).replaceAll("{assinatura}",ASSINATURA)}
-function enqueueSelected(source,id){const q=getQuote(source,id);if(!q)return;const checks=[...document.querySelectorAll(`.send_${source}_${id}:checked`)];if(!checks.length)return alert("Selecione fornecedores.");const all={...suppliers,...Object.fromEntries(Object.entries(fornecedores).map(([k,v])=>[k,{...v,name:v.nome,phone:v.whatsapp}]))};const updates={};checks.forEach(c=>{const sid=c.value,s=all[sid];if(!s)return;const key=uid("wa");updates[`whatsappQueue/${key}`]={quoteId:q.id,quoteSource:q.source,quoteNumber:q.number,supplierId:sid,supplierName:s.name||s.nome,phone:phoneBR(s.phone||s.whatsapp),message:buildMessage(q,sid,s),status:"pending",createdAt:Date.now(),signature:ASSINATURA}});db.ref().update(updates).then(()=>alert(`${checks.length} mensagem(ns) na fila.`))}
-function setQuoteStatus(source,id,status){db.ref((source==="quotes"?`quotes/${id}/status`:`cotacoes/${id}/status`)).set(status)}
-function deleteQuote(source,id){if(!confirm("Excluir definitivamente esta cotação e suas respostas?"))return;const updates={};updates[source==="quotes"?`quotes/${id}`:`cotacoes/${id}`]=null;if(source==="cotacoes")updates[`respostas/${id}`]=null;db.ref().update(updates)}
-function editQuote(source,id){const q=getQuote(source,id);if(!q)return;editing={source,id};$("quoteFormTitle").textContent="Editando cotação "+q.number;$("quoteNumber").value=q.number;const v=q.vehicle||{};$("vehCustomer").value=v.customer||v.cliente||"";$("vehBrand").value=v.brand||v.marca||"";$("vehModel").value=v.model||v.modelo||"";$("vehYear").value=v.year||v.ano||"";$("vehPlate").value=v.plate||v.placa||"";$("vehChassi").value=v.chassi||"";$("vehKm").value=v.km||"";$("vehPrefix").value=v.prefix||v.prefixo||"";$("vehObs").value=v.obs||"";draftItems=q.items.map((it,idx)=>({...it,seq:idx+1}));renderDraft();showTab("novo")}
-function generateOC(source,id){const q=getQuote(source,id);if(!q)return;const wins=[];q.items.forEach(it=>{const b=bestForItem(q,it);if(b)wins.push({it,b})});if(!wins.length)return alert("Nenhuma resposta válida para gerar OC.");const grouped={};wins.forEach(w=>{if(!grouped[w.b.supplierId])grouped[w.b.supplierId]=[];grouped[w.b.supplierId].push(w)});const updates={};Object.entries(grouped).forEach(([sid,arr])=>{const ocid=uid("oc"),total=arr.reduce((s,w)=>s+w.b.price*Number(w.it.qty||1),0),profit=arr.reduce((s,w)=>s+(Number(w.it.saleTotal||0)-w.b.price*Number(w.it.qty||1)),0);updates[`purchaseOrders/${ocid}`]={id:ocid,quoteId:id,quoteSource:source,quoteNumber:q.number,supplierId:sid,supplierName:supplierName(sid,q),total,profit,status:"aberta",createdAt:Date.now(),items:arr.map(w=>({oem:w.it.oem,desc:w.it.desc,qty:w.it.qty,brand:w.b.brand,brandCode:w.b.brandCode,priceUnit:w.b.price,total:w.b.price*Number(w.it.qty||1),availability:w.b.availability,obs:w.b.obs})),signature:ASSINATURA}});db.ref().update(updates).then(()=>{alert("Ordem de compra gerada.");showTab("compras")})}
-function renderQueue(){const list=arrObj(whatsappQueue).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));$("robotQueue").innerHTML=list.length?`<div class="tablewrap"><table><thead><tr><th>Status</th><th>Fornecedor</th><th>Telefone</th><th>Mensagem</th></tr></thead><tbody>${list.map(x=>`<tr><td>${esc(x.status)}</td><td>${esc(x.supplierName||supplierName(x.supplierId))}</td><td>${esc(x.phone||"")}</td><td>${esc(String(x.message||"").slice(0,160))}</td></tr>`).join("")}</tbody></table></div>`:"<p class='muted'>Fila vazia.</p>"}
-function renderOrders(){const list=[...arrObj(purchaseOrders),...arrObj(ordensCompra)];$("ordersList").innerHTML=list.length?list.map(o=>`<div class="quote"><b>${esc(o.supplierName||o.fornecedorNome||o.id)}</b><br>Total: ${money(o.total||o.totalCompra||0)} | Lucro: ${money(o.profit||o.lucroTotal||0)}</div>`).join(""):"<p class='muted'>Nenhuma ordem de compra.</p>"}
-function renderDebug(qs){$("debugBox").innerHTML=`<ul><li>settings: ${Object.keys(settings||{}).length}</li><li>clientSetup: ${Object.keys(clientSetup||{}).length}</li><li>quotes: ${Object.keys(quotes||{}).length}</li><li>cotacoes: ${Object.keys(cotacoes||{}).length}</li><li>respostas: ${Object.keys(respostas||{}).length}</li><li>suppliers: ${Object.keys(suppliers||{}).length}</li><li>fornecedores: ${Object.keys(fornecedores||{}).length}</li><li>priceDb: ${Object.keys(priceDb||{}).length}</li><li>whatsappQueue: ${Object.keys(whatsappQueue||{}).length}</li><li>purchaseOrders: ${Object.keys(purchaseOrders||{}).length}</li><li>ordensCompra: ${Object.keys(ordensCompra||{}).length}</li><li>Total normalizado: ${qs.length}</li></ul>`}
-function addDraftItem(){const desc=$("itemDesc").value.trim();if(!desc)return alert("Descrição obrigatória.");const qty=parseMoney($("itemQty").value)||1,unit=parseMoney($("itemSale").value);draftItems.push({id:uid("item"),seq:draftItems.length+1,oem:$("itemOem").value.trim(),altCode:$("itemAlt").value.trim(),desc,qty,type:$("itemType").value.trim()||"geral",saleUnit:unit,saleTotal:unit*qty});renderDraft();["itemOem","itemAlt","itemDesc","itemSale"].forEach(i=>$(i).value="");$("itemQty").value="1";$("itemType").value=""}
-function renderDraft(){$("draftItems").innerHTML=draftItems.length?`<div class="tablewrap"><table><thead><tr><th>#</th><th>Código</th><th>Descrição</th><th>Qtd</th><th>Total</th></tr></thead><tbody>${draftItems.map((i,idx)=>`<tr><td>${idx+1}</td><td>${esc(i.oem)}</td><td>${esc(i.desc)}</td><td>${i.qty}</td><td>${money(i.saleTotal)}</td></tr>`).join("")}</tbody></table></div>`:""}
-function clearQuoteForm(){editing=null;draftItems=[];["quoteNumber","vehCustomer","vehBrand","vehModel","vehYear","vehPlate","vehChassi","vehKm","vehPrefix","vehObs","itemOem","itemAlt","itemDesc","itemSale","itemType"].forEach(i=>$(i).value="");$("itemQty").value="1";$("quoteFormTitle").textContent="Novo orçamento / cotação";renderDraft()}
-function saveQuote(){if(!draftItems.length)return alert("Adicione peças.");const vehicle={customer:$("vehCustomer").value,brand:$("vehBrand").value,model:$("vehModel").value,year:$("vehYear").value,plate:$("vehPlate").value,chassi:$("vehChassi").value,km:$("vehKm").value,prefix:$("vehPrefix").value,obs:$("vehObs").value};if(editing&&editing.source==="cotacoes"){const pecas={};draftItems.forEach((it,idx)=>pecas[it.id||("p"+idx)]={id:it.id||("p"+idx),ordem:idx+1,codigoOriginal:it.oem,descricaoOriginal:it.desc,quantidade:it.qty,tipo:it.type,totalLiquidoPlanilha:it.saleTotal,valorUnitarioPlanilha:it.saleUnit});db.ref("cotacoes/"+editing.id).update({numero:$("quoteNumber").value,status:"aberta",veiculo:{marca:vehicle.brand,modelo:vehicle.model,ano:vehicle.year,placa:vehicle.plate,chassi:vehicle.chassi,km:vehicle.km,prefixo:vehicle.prefix},pecas,totalPecas:draftItems.length}).then(()=>{clearQuoteForm();showTab("cotacoes")});return}const id=editing?.id||uid("quote");const payload={id,number:$("quoteNumber").value.trim()||id,status:"open",vehicle,items:draftItems.map((x,i)=>({...x,seq:i+1})),updatedAt:Date.now(),signature:ASSINATURA};if(!editing)payload.createdAt=Date.now();db.ref("quotes/"+id).update(payload).then(()=>{clearQuoteForm();showTab("cotacoes");alert("Cotação salva.")})}
-function importXlsx(){const file=$("fileXlsx").files[0];if(!file)return alert("Escolha a planilha.");const reader=new FileReader();reader.onload=e=>{const wb=XLSX.read(new Uint8Array(e.target.result),{type:"array"});let rows=[];wb.SheetNames.forEach(n=>rows.push(...XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:""})));let parsed=[];rows.forEach((r,idx)=>{let cells=r.map(x=>String(x||"").trim());let text=cells.join(" ").toUpperCase();if(text.includes("SERVIÇO")||text.includes("SERVICO"))return;if(!(text.includes("PEÇA")||text.includes("PECA")||text.includes("COD")))return;let desc=cells.find(c=>c.length>6&&!/PE[ÇC]A|COD|VALOR|QTD|DESCRI/i.test(c))||"";if(!desc||desc.toUpperCase()==="DESCRIÇÃO")return;let code=cells.find(c=>/[A-Z0-9]{5,}/i.test(c)&&! /PE[ÇC]A|COD|DESCRI/i.test(c))||"sem oem";let nums=cells.map(parseMoney).filter(n=>n>0);let qty=nums.find(n=>n>0&&n<1000)||1;let total=nums[nums.length-1]||0;parsed.push({id:uid("item"),seq:draftItems.length+parsed.length+1,oem:code,altCode:"",desc,qty,type:"geral",saleUnit:total&&qty?total/qty:0,saleTotal:total})});draftItems.push(...parsed);renderDraft();alert(parsed.length+" peça(s) importadas.")};reader.readAsArrayBuffer(file)}
-window.addEventListener("load",init);setTimeout(()=>{if($("setTheme"))$("setTheme").onchange=()=>applyTheme($("setTheme").value)},500);
-</script>
-<script src="valorIA_patch.js"></script>
+  <div class="tabs">
+    <button class="tab active" data-tab="inicio">Início</button>
+    <button class="tab" data-tab="configcliente">Config. Cliente</button>
+    <button class="tab" data-tab="estabelecimento">Estabelecimento</button>
+    <button class="tab" data-tab="nichos">Nichos</button>
+    <button class="tab" data-tab="clientes">Clientes / Referências</button>
+    <button class="tab" data-tab="veiculos">Veículos</button>
+    <button class="tab" data-tab="fornecedores">Fornecedores</button>
+    <button class="tab" data-tab="precos">Banco de preços</button>
+    <button class="tab" data-tab="novo">Novo orçamento</button>
+    <button class="tab" data-tab="cotacoes">Cotações</button>
+    <button class="tab" data-tab="whatsappRespostas">Respostas WhatsApp</button>
+    <button class="tab" data-tab="compras">Compras / OC</button>
+    <button class="tab" data-tab="robo">Robô</button>
+    <button class="tab" data-tab="debug">Diagnóstico</button>
+  </div>
+
+  <section id="inicio" class="tabpage">
+    <div class="grid">
+      <div class="card"><h2>Abertas</h2><div class="kpi" id="kpiOpen">0</div><p class="muted">Cotações aceitando respostas.</p></div>
+      <div class="card"><h2>Encerradas</h2><div class="kpi" id="kpiClosed">0</div><p class="muted">Cotações fechadas.</p></div>
+      <div class="card"><h2>Canceladas</h2><div class="kpi" id="kpiCanceled">0</div><p class="muted">Cotações canceladas.</p></div>
+      <div class="card"><h2>Fornecedores ativos</h2><div class="kpi" id="kpiSupActive">0</div><p class="muted">Prontos para cotar.</p></div>
+      <div class="card"><h2>Banco de preços</h2><div class="kpi" id="kpiPrices">0</div><p class="muted">Itens/históricos salvos.</p></div>
+      <div class="card"><h2>Fila robô</h2><div class="kpi" id="kpiQueue">0</div><p class="muted">Mensagens pendentes.</p></div>
+      <div class="card"><h2>Não vinculadas</h2><div class="kpi" id="kpiUnmatched">0</div><p class="muted">WhatsApp para revisar.</p></div>
+    </div>
+    <div class="card"><h2>Últimas cotações</h2><div id="homeQuotes"></div></div>
+    <div class="card"><h2>Últimas ordens de compra</h2><div id="homeOrders"></div></div>
+    <div class="card"><h2>Últimos preços atualizados</h2><div id="homePrices"></div></div>
+  </section>
+
+  <section id="configcliente" class="tabpage hidden">
+    <div class="card">
+      <h2>Configuração do cliente / implantação</h2>
+      <div class="grid">
+        <div><label>Nome do cliente/empresa</label><input id="clientName"></div>
+        <div><label>ID interno do cliente</label><input id="clientId"></div>
+        <div><label>Nicho principal</label><input id="clientNiche"></div>
+        <div><label>Link GitHub Pages</label><input id="clientSiteUrl"></div>
+        <div><label>Projeto Firebase</label><input id="clientProjectId"></div>
+        <div><label>Realtime Database URL</label><input id="clientDbUrl"></div>
+        <div><label>Email admin Firebase Auth</label><input id="clientAdminEmail"></div>
+        <div><label>WhatsApp gestor</label><input id="clientManagerPhone"></div>
+        <div><label>Cidade/UF</label><input id="clientCity"></div>
+        <div><label>Responsável</label><input id="clientOwner"></div>
+        <div><label>Status implantação</label><input id="clientStatus"></div>
+      </div>
+      <label>Observações internas</label><textarea id="clientObs"></textarea>
+      <button class="green" onclick="saveClientSetup()">Salvar dados do cliente</button>
+      <button class="light" onclick="testFirebase()">Testar conexão Realtime Database</button>
+      <button class="light" onclick="testAuth()">Testar Auth</button>
+      <button class="light" onclick="copyPanelLink()">Copiar link do painel</button>
+      <button class="light" onclick="copyFornecedorLinkExample()">Copiar link do fornecedor</button>
+    </div>
+  </section>
+
+  <section id="estabelecimento" class="tabpage hidden">
+    <div class="card">
+      <h2>Estabelecimento</h2>
+      <div class="grid">
+        <div><label>Nome do estabelecimento</label><input id="setName"></div>
+        <div><label>WhatsApp da loja</label><input id="setPhone"></div>
+        <div><label>WhatsApp do gestor para avisos</label><input id="setManagerPhone"></div>
+        <div><label>Cidade/UF</label><input id="setCity"></div>
+        <div><label>Responsável</label><input id="setOwner"></div>
+        <div><label>Nicho selecionado</label><select id="setNiche"></select></div>
+        <div><label>Tema</label><select id="setTheme"><option value="light">Claro</option><option value="dark">Escuro</option></select></div>
+        <div><label>Ícone do nicho / personalizado</label><input id="setIcon"></div>
+      </div>
+      <label>Mensagem padrão de cotação</label><textarea id="setMessage"></textarea>
+      <p class="muted small">Variáveis: {fornecedor}, {estabelecimento}, {cotacao}, {veiculo}, {placa}, {chassi}, {qtd}, {link}, {assinatura}</p>
+      <label>Rodapé/assinatura</label><input id="setSignature" value="Powered by thIAguinho Soluções Digitais">
+      <button class="green" onclick="saveSettings()">Salvar estabelecimento</button>
+    </div>
+  </section>
+
+  <section id="nichos" class="tabpage hidden"><div class="card"><h2>Nichos disponíveis</h2><div id="nicheList" class="grid"></div></div></section>
+
+  <section id="clientes" class="tabpage hidden">
+    <div class="card">
+      <h2>Clientes / Referências</h2>
+      <div class="grid">
+        <div><label>Nome do cliente</label><input id="cliNome"></div>
+        <div><label>Telefone</label><input id="cliTel"></div>
+        <div><label>CPF/CNPJ</label><input id="cliDoc"></div>
+        <div><label>Empresa/órgão/frota</label><input id="cliEmpresa"></div>
+        <div><label>Responsável</label><input id="cliResp"></div>
+        <div><label>Email</label><input id="cliEmail"></div>
+      </div>
+      <label>Observações</label><textarea id="cliObs"></textarea>
+      <button class="green" onclick="saveCliente()">Salvar cliente</button>
+      <button class="light" onclick="clearClienteForm()">Limpar</button>
+      <hr><label>Pesquisar cliente</label><input id="cliSearch" oninput="renderClientes()">
+      <div id="clientesList"></div>
+    </div>
+  </section>
+
+  <section id="veiculos" class="tabpage hidden">
+    <div class="card">
+      <h2>Veículos / Itens do nicho Oficina</h2>
+      <div class="grid">
+        <div><label>Placa</label><input id="veiPlaca"></div>
+        <div><label>Chassi</label><input id="veiChassi"></div>
+        <div><label>Marca</label><input id="veiMarca"></div>
+        <div><label>Modelo</label><input id="veiModelo"></div>
+        <div><label>Ano</label><input id="veiAno"></div>
+        <div><label>KM</label><input id="veiKm"></div>
+        <div><label>Prefixo/frota/patrimônio</label><input id="veiPrefixo"></div>
+        <div><label>Cliente vinculado</label><input id="veiCliente"></div>
+      </div>
+      <label>Observações</label><textarea id="veiObs"></textarea>
+      <button class="green" onclick="saveVeiculo()">Salvar veículo</button>
+      <button class="light" onclick="clearVeiculoForm()">Limpar</button>
+      <hr><label>Pesquisar por placa, chassi, modelo, prefixo ou cliente</label><input id="veiSearch" oninput="renderVeiculos()">
+      <div id="veiculosList"></div>
+    </div>
+  </section>
+
+  <section id="fornecedores" class="tabpage hidden">
+    <div class="card">
+      <h2>Fornecedores</h2>
+      <div class="grid">
+        <div><label>Nome</label><input id="supName"></div>
+        <div><label>WhatsApp</label><input id="supPhone"></div>
+        <div><label>Tipos/categorias</label><input id="supTypes"></div>
+        <div><label>Observação</label><input id="supObs"></div>
+      </div>
+      <button class="green" onclick="saveSupplier()">Salvar fornecedor</button>
+      <button class="light" onclick="clearSupplierForm()">Limpar edição</button>
+      <div id="suppliersList"></div>
+    </div>
+  </section>
+
+  <section id="precos" class="tabpage hidden">
+    <div class="card">
+      <h2>Banco de preços</h2>
+      <div class="grid">
+        <div><label>Fornecedor</label><select id="priceSupplier"></select></div>
+        <div><label>Código original/OEM</label><input id="priceOem"></div>
+        <div><label>Descrição produto/peça</label><input id="priceDesc"></div>
+        <div><label>Marca</label><input id="priceBrand"></div>
+        <div><label>Código da marca</label><input id="priceBrandCode"></div>
+        <div><label>Preço conhecido</label><input id="priceValue"></div>
+        <div><label>Disponibilidade conhecida</label><input id="priceAvailability"></div>
+        <div><label>Origem</label><input id="priceOrigin" placeholder="manual / formulário / WhatsApp / OC"></div>
+        <div><label>Placa vinculada</label><input id="pricePlate"></div>
+        <div><label>Chassi vinculado</label><input id="priceChassi"></div>
+        <div><label>Cotação vinculada</label><input id="priceQuoteId"></div>
+        <div><label>Ordem de compra vinculada</label><input id="priceOrderId"></div>
+        <div><label>Nicho</label><input id="priceNiche"></div>
+      </div>
+      <label>Observação</label><input id="priceObs">
+      <button class="green" onclick="savePrice()">Salvar preço</button>
+      <hr><div class="grid">
+        <div><label>Pesquisar por código, descrição, marca, fornecedor, placa, chassi, nicho, data, disponibilidade</label><input id="priceSearch" oninput="renderPrices()"></div>
+        <div><label>Filtro nicho</label><input id="priceFilterNiche" oninput="renderPrices()"></div>
+        <div><label>Filtro disponibilidade</label><input id="priceFilterAvailability" oninput="renderPrices()"></div>
+      </div>
+      <div id="priceList"></div>
+    </div>
+  </section>
+
+  <section id="novo" class="tabpage hidden">
+    <div class="card">
+      <h2 id="quoteFormTitle">Novo orçamento / cotação</h2>
+      <div class="grid">
+        <div><label>Número OS/cotação</label><input id="quoteNumber"></div>
+        <div><label>Cliente/referência</label><input id="vehCustomer" oninput="searchVehicleHistory()"></div>
+        <div><label>Placa</label><input id="vehPlate" oninput="searchVehicleHistory()"></div>
+        <div><label>Chassi</label><input id="vehChassi" oninput="searchVehicleHistory()"></div>
+        <div><label>Marca</label><input id="vehBrand"></div>
+        <div><label>Modelo</label><input id="vehModel"></div>
+        <div><label>Ano</label><input id="vehYear"></div>
+        <div><label>KM</label><input id="vehKm"></div>
+        <div><label>Prefixo/frota</label><input id="vehPrefix"></div>
+        <div><label>Nicho</label><input id="quoteNiche" value="oficina"></div>
+        <div><label>Status</label><input id="quoteStatus" value="rascunho"></div>
+      </div>
+      <label>Observação</label><textarea id="vehObs"></textarea>
+      <div id="vehicleHistoryBox"></div>
+      <h3>Importar planilha</h3>
+      <input id="fileXlsx" type="file" accept=".xlsx,.xls,.csv">
+      <button class="light" onclick="importXlsx()">Importar peças</button>
+      <h3>Adicionar peça manual</h3>
+      <div class="grid">
+        <div><label>Código original/OEM</label><input id="itemOem"></div>
+        <div><label>Código alternativo</label><input id="itemAlt"></div>
+        <div><label>Descrição</label><input id="itemDesc"></div>
+        <div><label>Quantidade</label><input id="itemQty" value="1"></div>
+        <div><label>Preço venda/base unitário</label><input id="itemSale"></div>
+        <div><label>Tipo/categoria</label><input id="itemType"></div>
+        <div><label>Observação interna</label><input id="itemObs"></div>
+      </div>
+      <button class="light" onclick="addDraftItem()">Adicionar peça</button>
+      <button class="green" onclick="saveQuote()">Criar cotação</button>
+      <button class="amber" onclick="saveDraftQuote()">Salvar rascunho</button>
+      <button class="light" onclick="clearQuoteForm()">Limpar formulário</button>
+      <div id="draftItems"></div>
+    </div>
+  </section>
+
+  <section id="cotacoes" class="tabpage hidden"><div class="card"><h2>Cotações</h2><div id="quotesList">Carregando...</div></div></section>
+  <section id="whatsappRespostas" class="tabpage hidden"><div class="card"><h2>Respostas WhatsApp</h2><h3>Não vinculadas</h3><div id="unmatchedWhatsappFull"></div></div></section>
+  <section id="compras" class="tabpage hidden"><div class="card"><h2>Ordens de compra</h2><div id="ordersList"></div></div></section>
+  <section id="robo" class="tabpage hidden"><div class="card"><h2>Fila do robô</h2><div class="row"><button class="light" onclick="window.open('http://localhost:3010','_blank')">Abrir painel local</button><button class="light" onclick="renderQueue()">Atualizar fila</button></div><div id="robotQueue"></div></div></section>
+  <section id="debug" class="tabpage hidden"><div class="card"><h2>Diagnóstico</h2><div id="debugBox"></div></div></section>
+</main>
+<div class="footer">Powered by thIAguinho Soluções Digitais</div>
+<script src="valorIA_app.js"></script>
 </body>
 </html>
