@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Responder cotação — valor_IA</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<style>
+body{margin:0;background:#f4f7fb;font-family:Arial,Helvetica,sans-serif;color:#172033}main{max-width:900px;margin:auto;padding:14px}.card,.item{background:#fff;border:1px solid #d9e2ef;border-radius:18px;padding:14px;margin:12px 0;box-shadow:0 10px 28px #0001}label{display:block;margin:8px 0 4px;font-weight:800}input,textarea,select{width:100%;border:1px solid #d9e2ef;border-radius:12px;padding:10px}button{border:0;border-radius:12px;padding:10px 13px;font-weight:900;cursor:pointer;background:#2563eb;color:white;margin:3px}.green{background:#15803d}.red{background:#dc2626}.light{background:#eef4fb;color:#243349;border:1px solid #d9e2ef}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}.badge{display:inline-block;border:1px solid #d9e2ef;border-radius:999px;padding:5px 8px;margin:2px;font-size:12px}.muted{color:#64748b}.footer{text-align:center;padding:22px;color:#64748b}.hidden{display:none!important}
+</style>
+</head>
+<body>
+<main><h1>🧾 Responder cotação</h1><div id="app">Carregando...</div></main>
+<div class="footer">Powered by thIAguinho Soluções Digitais</div>
+<script>
+const ASSINATURA="Powered by thIAguinho Soluções Digitais";let db=null,source="",qid="",sid="",quote=null,supplier=null;
+function $(id){return document.getElementById(id)}function qs(k){return new URLSearchParams(location.search).get(k)||""}
+function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function parseMoney(v){let s=String(v||"").replace(/[^\d,.-]/g,"").trim();if(!s)return 0;if(s.includes(",")&&s.includes("."))s=s.replace(/\./g,"").replace(",",".");else if(s.includes(","))s=s.replace(",",".");let n=Number(s);return Number.isFinite(n)?n:0}
+function init(){firebase.initializeApp(window.firebaseConfig);db=firebase.database();source=qs("source")||"quotes";qid=qs("q");sid=qs("s");if(!qid||!sid)return $("app").innerHTML="<div class='card'>Link inválido.</div>";load()}
+async function load(){const qSnap=await db.ref((source==="cotacoes"?"cotacoes/":"quotes/")+qid).once("value");quote=qSnap.val();if(!quote)return $("app").innerHTML="<div class='card'>Cotação não encontrada.</div>";let sSnap=await db.ref("suppliers/"+sid).once("value");supplier=sSnap.val();if(!supplier){sSnap=await db.ref("fornecedores/"+sid).once("value");supplier=sSnap.val()}render()}
+function items(){if(source==="cotacoes"){return Object.entries(quote.pecas||{}).map(([pid,it],idx)=>({id:it.id||pid,seq:it.ordem||idx+1,oem:it.codigoOriginal||"",desc:it.descricaoOriginal||"",qty:it.quantidade||1}))}return(quote.items||[])}
+function render(){if(["fechada","closed","cancelada"].includes(String(quote.status).toLowerCase()))return $("app").innerHTML="<div class='card'><h2>Cotação encerrada</h2></div>";const its=items();$("app").innerHTML=`<div class='card'><h2>${esc(supplier?.name||supplier?.nome||"Fornecedor")}</h2><p>Cotação: <b>${esc(quote.number||quote.numero||qid)}</b><br>${its.length} item(ns)</p><p class='muted'>Valores internos da oficina não aparecem aqui.</p></div>`+its.map((it,idx)=>`<div class='item' id='card_${it.id}'><h2>${idx+1}. ${esc(it.desc)}</h2><span class='badge'>Código: ${esc(it.oem||"-")}</span><span class='badge'>Qtd: ${esc(it.qty)}</span><div><button class='green' onclick="showForm('${it.id}')">Tenho</button><button class='red' onclick="saveNo('${it.id}')">Não tenho e ir para próxima</button></div><div id='form_${it.id}' class='hidden'><div class='grid'><div><label>Marca</label><input id='brand_${it.id}'></div><div><label>Código da marca</label><input id='brandCode_${it.id}'></div><div><label>Preço unitário</label><input id='price_${it.id}'></div><div><label>Disponibilidade/prazo</label><input id='availability_${it.id}'></div></div><label>Descrição do vendedor</label><input id='desc_${it.id}' value='${esc(it.desc)}'><label>Observação</label><textarea id='obs_${it.id}'></textarea><button class='green' onclick="saveYes('${it.id}')">Salvar e próximo</button></div></div>`).join("")}
+function showForm(id){$("form_"+id).classList.remove("hidden")}
+function responsePath(itemId){return source==="cotacoes"?`respostas/${qid}/${sid}/${itemId}`:`quotes/${qid}/responses/${sid}/${itemId}`}
+function saveNo(id){const old=source==="cotacoes";const data=old?{temDisponivel:false,precoUnitario:0,marca:"",codigoMarca:"",descricaoFornecedor:"",disponibilidade:"indisponível",observacao:"Não tenho",fornecedorId:sid,fornecedorNome:supplier?.name||supplier?.nome||"",atualizadoEm:new Date().toISOString()}:{available:false,price:0,brand:"",brandCode:"",desc:"",availability:"indisponível",obs:"Não tenho",source:"form_button",updatedAt:Date.now(),signature:ASSINATURA};db.ref(responsePath(id)).set(data).then(()=>goNext(id))}
+function saveYes(id){const old=source==="cotacoes";const data=old?{temDisponivel:true,precoUnitario:parseMoney($("price_"+id).value),marca:$("brand_"+id).value,codigoMarca:$("brandCode_"+id).value,descricaoFornecedor:$("desc_"+id).value,disponibilidade:$("availability_"+id).value,observacao:$("obs_"+id).value,fornecedorId:sid,fornecedorNome:supplier?.name||supplier?.nome||"",atualizadoEm:new Date().toISOString()}:{available:true,price:parseMoney($("price_"+id).value),brand:$("brand_"+id).value,brandCode:$("brandCode_"+id).value,desc:$("desc_"+id).value,availability:$("availability_"+id).value,obs:$("obs_"+id).value,source:"form",updatedAt:Date.now(),signature:ASSINATURA};if((old?data.precoUnitario:data.price)<=0)return alert("Informe preço ou clique em Não tenho.");db.ref(responsePath(id)).set(data).then(()=>goNext(id))}
+function goNext(id){const its=items();const idx=its.findIndex(i=>i.id===id);const next=its[idx+1];if(next&&$("card_"+next.id))$("card_"+next.id).scrollIntoView({behavior:"smooth"});else alert("Resposta salva. Obrigado!")}
+window.addEventListener("load",init)
+</script>
+</body>
+</html>
