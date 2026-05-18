@@ -135,11 +135,24 @@ function detachTenantListeners() {
 function listenTenant() {
   db.ref(settingsPath()).on('value', function(s) { settings = s.val() || {}; fillSettings(); renderAll(); });
   ['suppliers','fornecedores','clientes','veiculos','priceDb','quotes','cotacoes','respostas','whatsappQueue','purchaseOrders','ordensCompra'].forEach(function(k) {
-    db.ref(tpath(k)).on('value', function(s) { window[k] = s.val() || {}; renderAll(); });
+    db.ref(tpath(k)).on('value', function(s) { setTenantCollection(k, s.val() || {}); renderAll(); });
   });
   db.ref(tpath('audit/unmatchedWhatsapp')).on('value', function(s) { unmatched = s.val() || {}; renderAll(); });
   db.ref(tpath('robotStatus/main')).on('value', function(s) { robotStatus = s.val() || {}; renderAll(); });
   db.ref('globalPriceDb/' + (currentTenant.niche || settings.niche || 'oficina')).limitToLast(80).on('value', function(s) { globalPrices = s.val() || {}; renderAll(); });
+}
+function setTenantCollection(key, value) {
+  if (key === 'suppliers') suppliers = value;
+  else if (key === 'fornecedores') fornecedores = value;
+  else if (key === 'clientes') clientes = value;
+  else if (key === 'veiculos') veiculos = value;
+  else if (key === 'priceDb') priceDb = value;
+  else if (key === 'quotes') quotes = value;
+  else if (key === 'cotacoes') cotacoes = value;
+  else if (key === 'respostas') respostas = value;
+  else if (key === 'whatsappQueue') whatsappQueue = value;
+  else if (key === 'purchaseOrders') purchaseOrders = value;
+  else if (key === 'ordensCompra') ordensCompra = value;
 }
 function fillSettings() {
   if (!currentTenantId) return;
@@ -173,9 +186,15 @@ function renderHome() {
 }
 function clearSupplierForm() { editingSupplier = null; ['supName','supPhone','supTypes','supObs'].forEach(function(i) { $(i).value = ''; }); }
 function saveSupplier() {
+  if (!$('supName').value.trim()) { alert('Informe o nome do fornecedor.'); return; }
+  if (!phoneBR($('supPhone').value)) { alert('Informe o WhatsApp do fornecedor.'); return; }
   const id = editingSupplier || uid('sup');
   const payload = { id: id, name: $('supName').value, nome: $('supName').value, phone: phoneBR($('supPhone').value), whatsapp: phoneBR($('supPhone').value), types: $('supTypes').value.split(',').map(function(x) { return x.trim(); }).filter(Boolean), tipos: $('supTypes').value.split(',').map(function(x) { return x.trim(); }).filter(Boolean), note: $('supObs').value, obs: $('supObs').value, active: true, ativo: true, updatedAt: Date.now(), signature: SIGNATURE };
-  db.ref(tpath('suppliers/' + id)).update(payload).then(clearSupplierForm);
+  db.ref(tpath('suppliers/' + id)).update(payload).then(function() {
+    suppliers[id] = Object.assign({}, suppliers[id] || {}, payload);
+    renderSuppliers();
+    clearSupplierForm();
+  }).catch(function(e) { alert('Falha ao salvar fornecedor: ' + (e.message || e)); });
 }
 function editSupplier(id) { const s = suppliers[id] || fornecedores[id] || {}; editingSupplier = id; $('supName').value = s.name || s.nome || ''; $('supPhone').value = s.phone || s.whatsapp || ''; $('supTypes').value = (s.types || s.tipos || []).join(', '); $('supObs').value = s.note || s.obs || ''; showTab('fornecedores'); }
 function setSupplierActive(id, active) { db.ref(tpath('suppliers/' + id)).update({ active: active, ativo: active, updatedAt: Date.now() }); }
@@ -265,7 +284,7 @@ function readSpreadsheetRows(file) {
 }
 async function readPdfText(file) {
   if (!window.pdfjsLib) throw new Error('Leitor PDF não carregado.');
-  if (pdfjsLib.GlobalWorkerOptions) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  if (pdfjsLib.GlobalWorkerOptions) pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
   const data = new Uint8Array(await file.arrayBuffer());
   const pdf = await pdfjsLib.getDocument({ data: data }).promise;
   let pages = [];
@@ -304,6 +323,32 @@ function extractImportMetaFromText(text) {
   pick('customer', /DADOS DO CLIENTE\s+UNIDADE\s*:\s*([^|:\n]{2,80})(?:\s+CNPJ|\s*\||$)/i);
   pick('customerDoc', /DADOS DO CLIENTE[\s\S]{0,120}?CNPJ\s*:\s*([0-9.\/-]{14,18})/i);
   pick('shopName', /RAZAO SOCIAL\s*:\s*([^|:\n]{2,90})(?:\s+CNPJ|\s*\||$)/i);
+  const lines = String(text || '').split(/\r?\n/).map(function(l) { return l.replace(/\s+/g, ' ').trim(); }).filter(Boolean);
+  const plateHeader = lines.findIndex(function(l) { return /Placa\s+Cor\s+Chassi\s+Quilometragem/i.test(l); });
+  if (plateHeader >= 0 && lines[plateHeader + 1]) {
+    const parts = lines[plateHeader + 1].split(/\s+/);
+    if (!meta.plate && parts[0]) meta.plate = parts[0];
+    if (!meta.chassi && parts[2]) meta.chassi = parts[2];
+    if (!meta.km && parts[3]) meta.km = parts[3];
+  }
+  if (!meta.brand || !meta.model || !meta.year) {
+    const title = lines.find(function(l) { return /\b(19|20)\d{2}\b/.test(l) && !/Relat[oó]rio|gerado|Or[cç]amento/i.test(l); });
+    if (title) {
+      const y = title.match(/\b(19|20)\d{2}\b(?!.*\b(19|20)\d{2}\b)/);
+      if (y && !meta.year) meta.year = y[0];
+      const beforeYear = y ? title.slice(0, title.lastIndexOf(y[0])).trim() : title;
+      const first = beforeYear.split(/\s+/)[0];
+      if (first && !meta.brand) meta.brand = first;
+      if (beforeYear && !meta.model) meta.model = beforeYear.replace(/^[A-Z]+\s+/i, '').trim();
+    }
+  }
+  const clientHeader = lines.findIndex(function(l) { return /^Cliente\b/i.test(l) && /CPF\/CNPJ|Or[cç]amento/i.test(l); });
+  if (clientHeader >= 0 && !meta.customer) {
+    const cleanCustomerLine = function(line) { return String(line || '').replace(/\s+#\d+.*$/, '').replace(/\s+[^\s]+@[^\s]+.*$/, '').replace(/\s+[a-z0-9_.-]+\.(gov|com|br|org).*$/i, '').replace(/\s+-\s*$/, '').trim(); };
+    const c1 = cleanCustomerLine(lines[clientHeader + 1]);
+    const c2 = (lines[clientHeader + 2] || '').match(/^(ESTADO|MUNICIPIO|PREFEITURA|POLICIA|SECRETARIA|[A-Z ]{8,})/i) ? cleanCustomerLine(lines[clientHeader + 2]) : '';
+    meta.customer = [c1, c2].filter(Boolean).join(' ').replace(/\s+-\s*$/, '').trim();
+  }
   return meta;
 }
 function parseImportedRows(rows, fileName) {
@@ -338,6 +383,8 @@ function parseImportedRows(rows, fileName) {
 }
 function parseImportedText(text, fileName) {
   const meta = extractImportMetaFromText(text);
+  const ciliaItems = parseCiliaPdfItems(text, fileName);
+  if (ciliaItems.length) return { items: dedupeImportedItems(ciliaItems), meta: meta };
   const rows = String(text || '').split(/\r?\n/).map(function(line) { return line.split(/\s{2,}|\s+\|\s+|;/).filter(Boolean); });
   let parsed = parseImportedRows(rows, fileName);
   if (parsed.items.length) return { items: parsed.items, meta: Object.assign(meta, parsed.meta || {}) };
@@ -353,6 +400,36 @@ function parseImportedText(text, fileName) {
     out.push({ id: uid('item'), oem: m[1], altCode: isPartCode(m[2]) ? m[2] : '', desc: desc, qty: qty, saleUnit: total ? total / qty : 0, saleTotal: total, type: 'peca_importada_pdf', line: idx + 1, sourceFile: fileName || '' });
   });
   return { items: dedupeImportedItems(out), meta: meta };
+}
+function parseCiliaPdfItems(text, fileName) {
+  const lines = String(text || '').split(/\r?\n/).map(function(line) { return line.replace(/\s+/g, ' ').trim(); }).filter(Boolean);
+  const out = [];
+  const stop = lines.findIndex(function(l) { return /^Servi[cç]os\s*\(/i.test(l) || /^Subtotal Servi[cç]os/i.test(l); });
+  const limit = stop >= 0 ? stop : lines.length;
+  for (let i = 0; i < limit; i++) {
+    const codeMatch = lines[i].match(/^C[oó]d:\s*([A-Z0-9.\/-]{4,24})/i);
+    if (!codeMatch || !isPartCode(codeMatch[1])) continue;
+    let descParts = [];
+    let j = i - 1;
+    while (j >= 0) {
+      const line = lines[j];
+      if (/^C[oó]d:/i.test(line) || /Pe[cç]as e M[aã]o de Obra|Opera[cç][oõ]es|Total Pe[cç]as/i.test(line)) break;
+      if (/Oficina\s+R\$/i.test(line) || /\bT\s+R&I\b/i.test(line) || /\bR\$\b/i.test(line) || /^[0-9.,]+\s+Oficina/i.test(line)) { j--; continue; }
+      if (!isServiceLike(line) && !isHeaderLike(line)) descParts.unshift(line);
+      if (descParts.join(' ').length > 8) break;
+      j--;
+    }
+    const desc = descParts.join(' ').trim();
+    if (!desc || isServiceLike(desc)) continue;
+    const opText = lines.slice(Math.max(0, j + 1), i).join(' ');
+    let qty = 1;
+    const qtyMatch = opText.match(/([0-9]+(?:[,.][0-9]+)?)\s+Oficina\s+R\$/i);
+    if (qtyMatch) qty = parseMoney(qtyMatch[1]) || 1;
+    const amounts = Array.from(opText.matchAll(/R\$\s*([0-9.]+,[0-9]{2}|[0-9]+(?:\.[0-9]{2})?)/g)).map(function(m) { return parseMoney(m[1]); }).filter(function(v) { return v > 0; });
+    const total = amounts.length ? amounts[amounts.length - 1] : 0;
+    out.push({ id: uid('item'), oem: codeMatch[1], altCode: '', desc: desc, qty: qty, saleUnit: total && qty ? total / qty : 0, saleTotal: total, type: 'peca_importada_pdf', line: i + 1, sourceFile: fileName || '' });
+  }
+  return out;
 }
 function dedupeImportedItems(items) {
   const seen = {};

@@ -57,16 +57,22 @@ function tenantPayload(id, email) { return { tenantId: id, businessName: $('tena
 function normalizedTenantKey(t, key) { return [safeEmail(t.email || ''), slug(t.tenantId || key || ''), slug(t.businessName || '')].filter(Boolean).join('|'); }
 function tenantListWithDuplicates() {
   const raw = Object.entries(tenants || {}).map(function(e) { return Object.assign({ key: e[0] }, (e[1] || {}).meta || {}); });
-  const seen = {};
+  const groups = [];
   raw.forEach(function(t) {
     const emailKey = safeEmail(t.email || '');
     const idKey = slug(t.tenantId || t.key || '');
     const nameKey = slug(t.businessName || '');
-    const matchKey = emailKey || idKey || nameKey || t.key;
-    seen[matchKey] = seen[matchKey] || [];
-    seen[matchKey].push(t);
+    let group = groups.find(function(g) {
+      return (emailKey && g.emails[emailKey]) || (idKey && g.ids[idKey]) || (nameKey && g.names[nameKey]);
+    });
+    if (!group) { group = { rows: [], emails: {}, ids: {}, names: {} }; groups.push(group); }
+    group.rows.push(t);
+    if (emailKey) group.emails[emailKey] = true;
+    if (idKey) group.ids[idKey] = true;
+    if (nameKey) group.names[nameKey] = true;
   });
-  return Object.values(seen).map(function(group) {
+  return groups.map(function(g) {
+    const group = g.rows;
     group.sort(function(a,b) { return (a.key === slug(a.key) ? -1 : 1) - (b.key === slug(b.key) ? -1 : 1); });
     const primary = group.find(function(t) { return t.active !== false; }) || group[0];
     primary.duplicates = group.filter(function(t) { return t.key !== primary.key; });
@@ -80,11 +86,15 @@ async function saveTenant() {
   if (!id) { alert('Tenant ID inválido.'); return; }
   const nameKey = slug($('tenantName').value.trim());
   const emailKey = safeEmail(email);
-  const duplicates = Object.entries(tenants || {}).filter(function(e) {
+  let duplicates = Object.entries(tenants || {}).filter(function(e) {
     const key = e[0];
     const t = ((e[1] || {}).meta || {});
     return key !== id && (safeEmail(t.email || '') === emailKey || slug(t.tenantId || key) === id || (nameKey && slug(t.businessName || '') === nameKey));
   });
+  const indexed = await db.ref('tenantEmailIndex/' + emailKey).once('value');
+  if (indexed.exists() && indexed.val().tenantId && indexed.val().tenantId !== id && !duplicates.find(function(e) { return e[0] === indexed.val().tenantId; })) {
+    duplicates.push([indexed.val().tenantId, tenants[indexed.val().tenantId] || { meta: { tenantId: indexed.val().tenantId, email: email } }]);
+  }
   if (duplicates.length) {
     const target = duplicates[0][0];
     if (!confirm('Este estabelecimento já existe no superadmin (' + target + '). Vou atualizar o cadastro canônico e desativar o duplicado, sem apagar dados. Continuar?')) return;
@@ -100,10 +110,19 @@ async function saveTenant() {
   });
   db.ref().update(up).then(function() { alert('Estabelecimento salvo sem duplicar. O cliente entra no index.html e cria a própria senha.'); clearTenantForm(); });
 }
-function renderTenants() { const list = tenantListWithDuplicates(); $('fileTenant').innerHTML = '<option value="">Selecione</option>' + list.map(function(t) { return '<option value="' + esc(t.tenantId || t.key) + '">' + esc(t.businessName || t.tenantId || t.key) + '</option>'; }).join(''); $('tenantList').innerHTML = list.length ? '<div class="tablewrap"><table><tr><th>Estabelecimento</th><th>E-mail</th><th>Nicho</th><th>Status</th><th>Global</th><th>Ações</th></tr>' + list.map(function(t) { const id = t.tenantId || t.key; const dup = (t.duplicates || []).length ? '<br><span class="bad">Duplicado(s): ' + esc(t.duplicates.map(function(d) { return d.key; }).join(', ')) + '</span> <button class="amber" onclick="deactivateDuplicateTenants(\'' + id + '\')">Desativar duplicados</button>' : ''; return '<tr><td>' + esc(t.businessName) + '<br><span class="muted">' + esc(id) + '</span>' + dup + '</td><td>' + esc(t.email) + '</td><td>' + esc(t.niche) + '</td><td>' + esc(t.implementationStatus || (t.active === false ? 'inativo' : 'ativo')) + '</td><td>' + (t.globalPriceAccess ? 'consulta ' : '') + (t.globalPricePublish ? 'publica' : '') + '</td><td><button onclick="editTenant(\'' + id + '\')">Editar</button> <button class="amber" onclick="setTenantActive(\'' + id + '\',false)">Desativar</button> <button class="green" onclick="setTenantActive(\'' + id + '\',true)">Reativar</button></td></tr>'; }).join('') + '</table></div>' : '<p class="muted">Nenhum estabelecimento cadastrado.</p>'; }
+function renderTenants() { const list = tenantListWithDuplicates(); $('fileTenant').innerHTML = '<option value="">Selecione</option>' + list.map(function(t) { return '<option value="' + esc(t.tenantId || t.key) + '">' + esc(t.businessName || t.tenantId || t.key) + '</option>'; }).join(''); $('tenantList').innerHTML = list.length ? '<div class="tablewrap"><table><tr><th>Estabelecimento</th><th>E-mail</th><th>Nicho</th><th>Status</th><th>Global</th><th>Ações</th></tr>' + list.map(function(t) { const id = t.tenantId || t.key; const dup = (t.duplicates || []).length ? '<br><span class="bad">Duplicado(s): ' + esc(t.duplicates.map(function(d) { return d.key; }).join(', ')) + '</span> <button class="amber" onclick="deactivateDuplicateTenants(\'' + id + '\')">Desativar duplicados</button>' : ''; return '<tr><td>' + esc(t.businessName) + '<br><span class="muted">' + esc(id) + '</span>' + dup + '</td><td>' + esc(t.email) + '</td><td>' + esc(t.niche) + '</td><td>' + esc(t.implementationStatus || (t.active === false ? 'inativo' : 'ativo')) + '</td><td>' + (t.globalPriceAccess ? 'consulta ' : '') + (t.globalPricePublish ? 'publica' : '') + '</td><td><button onclick="editTenant(\'' + id + '\')">Editar</button> <button class="amber" onclick="setTenantActive(\'' + id + '\',false)">Desativar</button> <button class="green" onclick="setTenantActive(\'' + id + '\',true)">Reativar</button> <button class="red" onclick="deleteTenant(\'' + id + '\')">Excluir</button></td></tr>'; }).join('') + '</table></div>' : '<p class="muted">Nenhum estabelecimento cadastrado.</p>'; }
 function deactivateDuplicateTenants(id) { const primary = tenantListWithDuplicates().find(function(t) { return (t.tenantId || t.key) === id; }); if (!primary || !primary.duplicates || !primary.duplicates.length) return; if (!confirm('Desativar registros duplicados deste estabelecimento sem apagar dados?')) return; const updates = {}; primary.duplicates.forEach(function(d) { updates['tenants/' + d.key + '/meta/active'] = false; updates['tenants/' + d.key + '/meta/duplicateOf'] = id; updates['tenants/' + d.key + '/meta/duplicateMarkedAt'] = Date.now(); }); if (primary.email) updates['tenantEmailIndex/' + safeEmail(primary.email)] = { tenantId: id, email: primary.email, role: 'tenant_client', active: true, updatedAt: Date.now() }; db.ref().update(updates); }
 function editTenant(id) { const t = (tenants[id] || {}).meta || {}; $('tenantId').value = t.tenantId || id; $('tenantName').value = t.businessName || ''; $('tenantEmail').value = t.email || ''; $('tenantNiche').value = t.niche || 'oficina'; $('tenantManager').value = t.managerPhone || ''; $('tenantCity').value = t.city || ''; $('tenantResponsible').value = t.responsible || ''; $('tenantStatus').value = t.implementationStatus || 'ativo'; $('globalAccess').value = String(!!t.globalPriceAccess); $('globalPublish').value = String(!!t.globalPricePublish); $('tenantObs').value = t.obs || ''; showTab('clientes'); }
 function setTenantActive(id, active) { const updates = {}; updates['tenants/' + id + '/meta/active'] = active; const email = ((tenants[id] || {}).meta || {}).email; if (email) updates['tenantEmailIndex/' + safeEmail(email) + '/active'] = active; db.ref().update(updates); }
+function deleteTenant(id) {
+  const t = (tenants[id] || {}).meta || {};
+  if (!confirm('Excluir este estabelecimento do superadmin e remover o acesso dele? Esta ação apaga tenants/' + id + '.')) return;
+  const updates = {};
+  updates['tenants/' + id] = null;
+  updates['publicQuotes/' + id] = null;
+  if (t.email) updates['tenantEmailIndex/' + safeEmail(t.email)] = null;
+  db.ref().update(updates).then(function() { alert('Estabelecimento excluído.'); });
+}
 function renderGlobal() { const filter = $('globalFilter') && $('globalFilter').value || ''; let html = ''; Object.entries(globalDb || {}).forEach(function(entry) { const niche = entry[0], items = entry[1] || {}; if (filter && niche !== filter) return; html += '<h3>' + esc(niche) + '</h3>'; html += Object.values(items).slice(-50).map(function(p) { return '<div class="quote"><b>' + esc(p.desc || p.descricao || '') + '</b><br>' + esc(p.oem || '') + ' ' + esc(p.brand || '') + ' - ' + Number(p.price || p.preco || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) + '<br><span class="muted">origem anonimizada</span></div>'; }).join(''); }); $('globalList').innerHTML = html || '<p class="muted">Sem dados globais.</p>'; }
 function parseConfig(t) { t = String(t || '').trim().replace(/^const\s+firebaseConfig\s*=\s*/, '').replace(/;\s*$/, ''); return Function('return (' + t + ')')(); }
 function fillFromBlock() { try { const c = parseConfig($('cfg').value); ['apiKey','authDomain','databaseURL','projectId','storageBucket','messagingSenderId','appId'].forEach(function(k) { $(k).value = c[k] || ''; }); } catch(e) { alert('Não consegui ler o bloco Firebase.'); } }
