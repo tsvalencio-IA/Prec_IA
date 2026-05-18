@@ -2,82 +2,196 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<title>Configurar valor_IA</title>
+<title>valor_IA — Configuração inicial</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body{font-family:Arial,Helvetica,sans-serif;background:#f4f7fb;margin:0;color:#172033}main{max-width:980px;margin:auto;padding:18px}.card{background:white;border:1px solid #d9e2ef;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 10px 28px #0001}label{display:block;font-weight:800;margin:10px 0 5px;color:#46556b}input,textarea{width:100%;border:1px solid #d9e2ef;border-radius:12px;padding:10px;font-size:14px}textarea{min-height:150px}button{border:0;border-radius:12px;background:#2563eb;color:white;font-weight:900;padding:12px;margin:4px;cursor:pointer}.green{background:#15803d}.light{background:#dbeafe;color:#0f172a;border:1px solid #2563eb}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}pre{white-space:pre-wrap;background:#0f172a;color:white;border-radius:12px;padding:12px;overflow:auto}.muted{color:#64748b}
+:root{--bg:#f0f4f8;--card:#fff;--line:#e2e8f0;--ink:#0f172a;--muted:#64748b;--blue:#1d4ed8;--green:#16a34a;--red:#dc2626;--shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(15,23,42,.07);--r:16px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Arial,Helvetica,sans-serif;color:var(--ink);padding-bottom:40px}
+header{background:linear-gradient(135deg,#fff,#eef5ff);border-bottom:1px solid var(--line);padding:14px 18px}
+.hdr{max-width:860px;margin:auto;display:flex;align-items:center;gap:12px}
+.logo{font-size:28px;background:#fff;border:1px solid var(--line);border-radius:14px;width:50px;height:50px;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);flex-shrink:0}
+h1{margin:0;font-size:20px;font-weight:900}
+.sub{margin:2px 0 0;font-size:13px;color:var(--muted)}
+main{max-width:860px;margin:auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:18px;margin-bottom:14px}
+.card h2{margin:0 0 14px;font-size:17px}
+label{display:block;font-size:12px;font-weight:800;color:#46556b;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.3px}
+input,textarea,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:14px;background:#fff;color:var(--ink);outline:none}
+input:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(29,78,216,.08)}
+textarea{min-height:100px;resize:vertical;font-family:monospace;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+button{border:0;border-radius:10px;padding:10px 14px;font-weight:800;font-size:13px;cursor:pointer;margin:3px}
+.bb{background:var(--blue);color:#fff}
+.bg{background:var(--green);color:#fff}
+.bgh{background:#f1f5f9;color:#334155;border:1px solid var(--line)}
+.notice{padding:10px 13px;border-radius:11px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-size:13px;margin:8px 0}
+.ok{color:var(--green);font-weight:800}
+.bad{color:var(--red);font-weight:800}
+.pill{display:inline-block;background:#f8fafc;border:1px solid var(--line);border-radius:999px;padding:3px 9px;font-size:12px;margin:2px}
+.output{white-space:pre;background:#0f172a;color:#7dd3fc;border-radius:12px;padding:14px;font-size:12px;overflow-x:auto;font-family:monospace;margin:8px 0}
+.step{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+.step-num{width:28px;height:28px;background:var(--blue);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0;margin-top:2px}
+footer{text-align:center;color:var(--muted);padding:20px;font-size:12px;border-top:1px solid var(--line);margin-top:10px}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
+<header>
+  <div class="hdr">
+    <div class="logo">⚙️</div>
+    <div>
+      <h1>valor_IA — Configuração inicial</h1>
+      <div class="sub">Gerador de firebase-config.js e robo-config.json</div>
+    </div>
+  </div>
+</header>
 <main>
-<h1>Configurar cliente valor_IA</h1>
-<div class="card">
-<p class="muted">Cole o bloco Firebase ou preencha os campos. Depois baixe os arquivos gerados.</p>
-<label>Firebase config completo</label>
-<textarea id="cfg" placeholder='Cole aqui: const firebaseConfig = {...};'></textarea>
-<button class="light" onclick="fillFromBlock()">Ler bloco Firebase</button>
-<div class="grid">
-<div><label>apiKey</label><input id="apiKey"></div>
-<div><label>authDomain</label><input id="authDomain"></div>
-<div><label>databaseURL / Realtime Database</label><input id="databaseURL"></div>
-<div><label>projectId</label><input id="projectId"></div>
-<div><label>storageBucket</label><input id="storageBucket"></div>
-<div><label>messagingSenderId</label><input id="messagingSenderId"></div>
-<div><label>appId</label><input id="appId"></div>
-<div><label>Link GitHub Pages</label><input id="siteUrl"></div>
-<div><label>Email admin Firebase Auth</label><input id="adminEmail"></div>
-<div><label>Nome do estabelecimento</label><input id="businessName"></div>
-<div><label>WhatsApp do gestor</label><input id="managerPhone"></div>
-</div>
-<button class="green" onclick="generateFiles()">Gerar arquivos</button>
-</div>
-<div class="card">
-<h2>Arquivos gerados</h2>
-<button onclick="downloadFirebaseConfig()">Baixar firebase-config.js</button>
-<button onclick="downloadRobotConfig()">Baixar robo-config.json</button>
-<button onclick="downloadClientNotes()">Baixar DADOS_DO_CLIENTE.txt</button>
-<pre id="preview">Aguardando geração...</pre>
-</div>
-<p class="muted">Powered by thIAguinho Soluções Digitais</p>
+
+  <!-- PASSO 1: COLAR CONFIG FIREBASE -->
+  <div class="card">
+    <h2>Passo 1 — Cole o bloco completo do Firebase</h2>
+    <div class="step">
+      <div class="step-num">1</div>
+      <div>
+        <p style="margin:0">Acesse <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> → seu projeto → Configurações do projeto → Seus apps → Configuração do SDK.</p>
+        <p style="margin:4px 0 0">Cole abaixo o bloco <code>const firebaseConfig = {...}</code> completo.</p>
+      </div>
+    </div>
+    <textarea id="rawConfig" placeholder='const firebaseConfig = {&#10;  apiKey: "...",&#10;  authDomain: "...",&#10;  databaseURL: "https://SEU-PROJETO-default-rtdb.firebaseio.com",&#10;  projectId: "...",&#10;  storageBucket: "...",&#10;  messagingSenderId: "...",&#10;  appId: "..."&#10;};'></textarea>
+    <button class="bb" onclick="parseFirebaseBlock()">⚙️ Extrair campos automaticamente</button>
+    <div id="parseStatus" style="margin-top:6px"></div>
+  </div>
+
+  <!-- PASSO 2: PREENCHER CAMPOS -->
+  <div class="card">
+    <h2>Passo 2 — Confirme / preencha os campos</h2>
+    <div class="grid">
+      <div><label>apiKey</label><input id="f_apiKey" placeholder="AIzaSy..."></div>
+      <div><label>authDomain</label><input id="f_authDomain" placeholder="projeto.firebaseapp.com"></div>
+      <div><label>databaseURL *</label><input id="f_databaseURL" placeholder="https://projeto-default-rtdb.firebaseio.com"></div>
+      <div><label>projectId</label><input id="f_projectId" placeholder="meu-projeto-12345"></div>
+      <div><label>storageBucket</label><input id="f_storageBucket" placeholder="projeto.appspot.com"></div>
+      <div><label>messagingSenderId</label><input id="f_messagingSenderId" placeholder="123456789012"></div>
+      <div><label>appId</label><input id="f_appId" placeholder="1:123:web:abc..."></div>
+      <div><label>measurementId (opcional)</label><input id="f_measurementId" placeholder="G-XXXXXXXX"></div>
+    </div>
+  </div>
+
+  <!-- PASSO 3: DADOS DO ROBÔ -->
+  <div class="card">
+    <h2>Passo 3 — Dados do robô e estabelecimento</h2>
+    <div class="grid">
+      <div><label>Nome do estabelecimento</label><input id="r_nome" placeholder="Ex: AutoPeças Central"></div>
+      <div><label>WhatsApp do gestor (com DDI 55)</label><input id="r_gestor" placeholder="5511999999999"></div>
+      <div><label>Link GitHub Pages</label><input id="r_github" placeholder="https://usuario.github.io/repo/"></div>
+      <div><label>Porta do robô local</label><input id="r_porta" value="3010"></div>
+      <div><label>Limite diário de mensagens</label><input id="r_limite" value="100"></div>
+    </div>
+  </div>
+
+  <!-- GERAR ARQUIVOS -->
+  <div class="card">
+    <h2>Passo 4 — Gerar arquivos</h2>
+    <div class="notice">Os arquivos gerados devem ser salvos manualmente. Copie e cole o conteúdo de cada um.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+      <button class="bg" onclick="gerarFirebaseConfig()">📄 Gerar firebase-config.js</button>
+      <button class="bg" onclick="gerarRoboConfig()">🤖 Gerar robo-config.json</button>
+      <button class="bgh" onclick="gerarDadosCliente()">📋 Gerar DADOS_DO_CLIENTE.txt</button>
+    </div>
+    <div id="outputArea"></div>
+  </div>
+
+  <!-- INSTRUÇÕES -->
+  <div class="card">
+    <h2>Instruções de uso dos arquivos gerados</h2>
+    <div class="step"><div class="step-num">A</div><div><b>firebase-config.js</b> — Salve na pasta <code>01_SUBIR_NO_GITHUB/</code> junto com index.html, fornecedor.html. Suba para o GitHub.</div></div>
+    <div class="step"><div class="step-num">B</div><div><b>firebase-config.js</b> — Salve TAMBÉM na pasta <code>02_PC_CLIENTE_ROBO/</code>. O robô lê esse arquivo com <code>require('../firebase-config.js')</code>.</div></div>
+    <div class="step"><div class="step-num">C</div><div><b>robo-config.json</b> — Salve na pasta <code>02_PC_CLIENTE_ROBO/</code>.</div></div>
+    <div class="step"><div class="step-num">D</div><div><b>DADOS_DO_CLIENTE.txt</b> — Guarde para referência interna da thIAguinho.</div></div>
+    <div class="step"><div class="step-num">E</div><div>Configure as regras do Firebase: vá em <b>Realtime Database → Rules</b> e cole o conteúdo de <code>03_FIREBASE_REGRAS_COPIAR/firebase-rtdb-rules-TESTE_FUNCIONA_AGORA.json</code>.</div></div>
+  </div>
+
 </main>
+<footer>Powered by thIAguinho Soluções Digitais</footer>
+
 <script>
-let generated = {};
-function parseConfig(text){
-  let t = String(text||"").trim();
-  t = t.replace(/^const\s+firebaseConfig\s*=\s*/,"").replace(/^let\s+firebaseConfig\s*=\s*/,"").replace(/^var\s+firebaseConfig\s*=\s*/,"").replace(/;\s*$/,"");
-  try { return Function("return ("+t+")")(); }
-  catch(e){ alert("Não consegui ler o bloco Firebase. Cole o bloco completo ou preencha manualmente."); throw e; }
+const ASSINATURA = 'Powered by thIAguinho Soluções Digitais';
+
+function v(id) { return document.getElementById(id)?.value?.trim() || ''; }
+
+function parseFirebaseBlock() {
+  const raw = v('rawConfig');
+  if (!raw) { document.getElementById('parseStatus').innerHTML = '<span style="color:var(--red)">❌ Cole o bloco do Firebase primeiro.</span>'; return; }
+  const fields = ['apiKey','authDomain','databaseURL','projectId','storageBucket','messagingSenderId','appId','measurementId'];
+  let found = 0;
+  fields.forEach(key => {
+    const match = raw.match(new RegExp(key + '\\s*:\\s*["\']([^"\']+)["\']'));
+    if (match) {
+      document.getElementById('f_' + key).value = match[1];
+      found++;
+    }
+  });
+  document.getElementById('parseStatus').innerHTML = found > 0
+    ? `<span style="color:var(--green)">✅ ${found} campo(s) extraído(s) automaticamente.</span>`
+    : '<span style="color:var(--red)">❌ Não foi possível extrair campos. Verifique se o bloco está no formato correto.</span>';
 }
-function fillFromBlock(){
-  const c = parseConfig(document.getElementById("cfg").value);
-  apiKey.value=c.apiKey||"";
-  authDomain.value=c.authDomain||"";
-  databaseURL.value=c.databaseURL||"";
-  projectId.value=c.projectId||"";
-  storageBucket.value=c.storageBucket||"";
-  messagingSenderId.value=c.messagingSenderId||"";
-  appId.value=c.appId||"";
+
+function buildConfig() {
+  const keys = ['apiKey','authDomain','databaseURL','projectId','storageBucket','messagingSenderId','appId','measurementId'];
+  const obj = {};
+  keys.forEach(k => { const val = v('f_' + k); if (val) obj[k] = val; });
+  return obj;
 }
-function generateFiles(){
-  const c = {apiKey:apiKey.value.trim(),authDomain:authDomain.value.trim(),databaseURL:databaseURL.value.trim(),projectId:projectId.value.trim(),storageBucket:storageBucket.value.trim(),messagingSenderId:messagingSenderId.value.trim(),appId:appId.value.trim()};
-  if(!c.apiKey || !c.databaseURL || !c.projectId){ alert("Preencha apiKey, databaseURL e projectId."); return; }
-  generated.firebaseConfig = `const firebaseConfig = ${JSON.stringify(c,null,2)};\n\nif (typeof window !== "undefined") window.firebaseConfig = firebaseConfig;\nif (typeof module !== "undefined") module.exports = firebaseConfig;\n`;
-  generated.robotConfig = JSON.stringify({siteUrl:siteUrl.value.trim(),adminEmail:adminEmail.value.trim(),businessName:businessName.value.trim(),managerPhone:managerPhone.value.trim(),signature:"Powered by thIAguinho Soluções Digitais"}, null, 2);
-  generated.notes = ["DADOS DO CLIENTE - valor_IA","","Estabelecimento: "+businessName.value.trim(),"GitHub Pages: "+siteUrl.value.trim(),"Email admin Firebase Auth: "+adminEmail.value.trim(),"WhatsApp gestor: "+managerPhone.value.trim(),"Projeto Firebase: "+c.projectId,"Realtime Database: "+c.databaseURL,"","Powered by thIAguinho Soluções Digitais"].join("\\n");
-  preview.textContent = "firebase-config.js\\n\\n"+generated.firebaseConfig+"\\n\\nrobo-config.json\\n\\n"+generated.robotConfig+"\\n\\nDADOS_DO_CLIENTE.txt\\n\\n"+generated.notes;
+
+function gerarFirebaseConfig() {
+  const cfg = buildConfig();
+  if (!cfg.apiKey || !cfg.databaseURL) { alert('Preencha pelo menos apiKey e databaseURL.'); return; }
+  const lines = Object.entries(cfg).map(([k, val]) => `  ${k}: "${val}"`).join(',\n');
+  const content = `// firebase-config.js — valor_IA\n// Gerado por config.html — ${ASSINATURA}\n// ATENÇÃO: Este arquivo contém chaves privadas. Não compartilhe publicamente.\nconst firebaseConfig = {\n${lines}\n};\nif (typeof window !== 'undefined') window.firebaseConfig = firebaseConfig;\nif (typeof module !== 'undefined') module.exports = firebaseConfig;\n`;
+  showOutput('firebase-config.js', content, 'Salvar como: 01_SUBIR_NO_GITHUB/firebase-config.js e 02_PC_CLIENTE_ROBO/firebase-config.js');
 }
-function download(name,text){
-  if(!text){ alert("Gere os arquivos primeiro."); return; }
-  const blob = new Blob([text],{type:"text/plain;charset=utf-8"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+
+function gerarRoboConfig() {
+  const cfg = buildConfig();
+  const obj = {
+    firebase: { ...cfg },
+    robo: {
+      nome: v('r_nome') || 'Estabelecimento',
+      gestorWhatsApp: v('r_gestor') || '',
+      githubPages: v('r_github') || '',
+      porta: parseInt(v('r_porta')) || 3010,
+      limiteDiario: parseInt(v('r_limite')) || 100,
+      iniciarComWindows: true,
+      geradoEm: new Date().toISOString(),
+      signature: ASSINATURA
+    }
+  };
+  showOutput('robo-config.json', JSON.stringify(obj, null, 2), 'Salvar como: 02_PC_CLIENTE_ROBO/robo-config.json');
 }
-function downloadFirebaseConfig(){download("firebase-config.js", generated.firebaseConfig)}
-function downloadRobotConfig(){download("robo-config.json", generated.robotConfig)}
-function downloadClientNotes(){download("DADOS_DO_CLIENTE.txt", generated.notes)}
+
+function gerarDadosCliente() {
+  const cfg = buildConfig();
+  const content = `DADOS DO CLIENTE — valor_IA\n${ASSINATURA}\nGerado em: ${new Date().toLocaleString('pt-BR')}\n\n========================================\nESTABELECIMENTO\n========================================\nNome: ${v('r_nome')}\nWhatsApp gestor: ${v('r_gestor')}\nGitHub Pages: ${v('r_github')}\n\n========================================\nFIREBASE\n========================================\nProject ID: ${cfg.projectId || '—'}\nDatabase URL: ${cfg.databaseURL || '—'}\napiKey: ${cfg.apiKey || '—'}\nauthDomain: ${cfg.authDomain || '—'}\nmessagingSenderId: ${cfg.messagingSenderId || '—'}\nappId: ${cfg.appId || '—'}\n\n========================================\nFORMULÁRIO DO FORNECEDOR\n========================================\n${v('r_github')}fornecedor.html?q=IDCOTACAO&s=IDFORNECEDOR&t=TOKEN\n\n========================================\nROBÔ\n========================================\nPorta local: ${v('r_porta') || 3010}\nLimite diário: ${v('r_limite') || 100} mensagens\n\n`;
+  showOutput('DADOS_DO_CLIENTE.txt', content, 'Salvar internamente como referência da implantação.');
+}
+
+function showOutput(name, content, instructions) {
+  const area = document.getElementById('outputArea');
+  area.innerHTML = `<div style="margin-bottom:8px">
+    <b>${name}</b> <span class="pill">${instructions}</span>
+    <button class="bgh" onclick="copyToClipboard()" style="margin-left:6px">📋 Copiar</button>
+  </div>
+  <div class="output" id="generatedOutput">${escHtml(content)}</div>`;
+}
+
+function copyToClipboard() {
+  const el = document.getElementById('generatedOutput');
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => alert('✅ Copiado para a área de transferência.'));
+}
+
+function escHtml(v) { return String(v).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
 </script>
 </body>
 </html>

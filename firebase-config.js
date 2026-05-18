@@ -7,6 +7,5 @@ const firebaseConfig = {
   messagingSenderId: "776990151458",
   appId: "1:776990151458:web:912775c07abd3c3d94cb7b"
 };
-
 if (typeof window !== "undefined") window.firebaseConfig = firebaseConfig;
 if (typeof module !== "undefined") module.exports = firebaseConfig;
