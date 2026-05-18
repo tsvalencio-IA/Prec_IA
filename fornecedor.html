@@ -1,1 +1,22 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Responder Cotação - valor_IA</title><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="styles.css"><script src="firebase-config.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script></head><body><main><div class="card" id="head"><h1 id="title">Carregando...</h1><p id="sub" class="muted"></p></div><div id="form" class="hidden"><div class="card"><span class="pill" id="progress"></span><h2 id="desc"></h2><p id="meta"></p><label>Disponibilidade</label><select id="disp" onchange="toggleFields()"><option value="sim">Tenho</option><option value="nao">Não tenho</option></select><div id="fields"><input id="brand" placeholder="Marca"><input id="brandCode" placeholder="Código da marca"><input id="fdesc" placeholder="Descrição fornecedor"><input id="price" type="number" step="0.01" placeholder="Preço unitário"><input id="availability" placeholder="Prazo/disponibilidade"><textarea id="obs" placeholder="Observação"></textarea></div><button class="green" id="nextBtn" onclick="saveItem(false)">Salvar e próximo</button><button class="green hidden" id="finishBtn" onclick="saveItem(true)">Salvar tudo e gerar comprovante</button></div></div><div id="done" class="card hidden"><h2 class="ok">Comprovante</h2><p><b>Protocolo:</b> <span id="protocol"></span></p><p><b>Cotação:</b> <span id="recQuote"></span></p><p><b>Data:</b> <span id="recDate"></span></p><div id="summary"></div><button onclick="window.print()">Imprimir / Salvar PDF</button></div><div class="footer">Powered by thIAguinho Soluções Digitais</div></main><script src="fornecedor_app.js"></script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>valor_IA - Responder cotação</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="styles.css">
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+</head>
+<body>
+  <main>
+    <div id="head" class="panel"><h1 id="title">Cotação</h1><p id="sub" class="muted">Carregando...</p><p class="pill" id="supplierPill"></p></div>
+    <div id="blocked" class="panel hidden"><h2 class="bad">Cotação indisponível</h2><p id="blockedText"></p></div>
+    <div id="form" class="panel hidden"><span class="pill" id="progress"></span><h2 id="desc"></h2><p id="meta"></p><label>Disponibilidade</label><select id="disp" onchange="toggleFields()"><option value="sim">Tenho</option><option value="nao">Não tenho</option></select><div id="fields" class="stack"><div class="grid"><div><label>Marca</label><input id="brand"></div><div><label>Código da marca</label><input id="brandCode"></div><div><label>Descrição do fornecedor</label><input id="fdesc"></div><div><label>Preço unitário</label><input id="price" inputmode="decimal"></div><div><label>Prazo/disponibilidade</label><input id="availability"></div></div><label>Observação</label><textarea id="obs"></textarea></div><div class="actions"><button class="green" id="nextBtn" onclick="saveItem(false)">Salvar e próximo</button><button class="amber" id="noBtn" onclick="saveUnavailableAndNext()">Não tenho e ir para próxima</button><button class="green hidden" id="finishBtn" onclick="saveItem(true)">Salvar tudo e gerar comprovante</button></div></div>
+    <div id="done" class="panel hidden"><h2 class="ok">Comprovante</h2><p><b>Protocolo:</b> <span id="protocol"></span></p><p><b>Cotação:</b> <span id="recQuote"></span></p><p><b>Data:</b> <span id="recDate"></span></p><div id="summary"></div><div class="actions"><button onclick="window.print()">Imprimir / Salvar PDF</button></div></div>
+    <div class="footer">Powered by thIAguinho Soluções Digitais</div>
+  </main>
+  <script src="fornecedor_app.js"></script>
+</body>
+</html>
