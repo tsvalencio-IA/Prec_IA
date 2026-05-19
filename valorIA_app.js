@@ -2,7 +2,6 @@ let db = null;
 let currentUser = null;
 let currentTenantId = null;
 let currentTenant = {};
-let legacyMode = false;
 let editingSupplier = null;
 let editingCliente = null;
 let editingVeiculo = null;
@@ -29,7 +28,6 @@ let selectedSuppliers = {};
 let scrollByQuote = {};
 const SIGNATURE = 'Powered by thIAguinho Soluções Digitais';
 const DEFAULT_MSG = 'Olá {fornecedor}, aqui é {estabelecimento}.\n\nCotação {cotacao} - {veiculo} {placa}\nChassi: {chassi}\nSão {qtd} item(ns).\n\nConfirme disponibilidade, marca, código da marca, descrição, preço atual e prazo pelo link:\n{link}\n\n{assinatura}';
-const ROOT_NODES = ['settings','suppliers','fornecedores','priceDb','quotes','cotacoes','respostas','whatsappQueue','purchaseOrders','ordensCompra'];
 function $(id) { return document.getElementById(id); }
 function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function(m) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]; }); }
 function money(v) { return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
@@ -39,9 +37,9 @@ function arr(o) { return Object.entries(o || {}).map(function(entry) { return Ob
 function phoneBR(v) { let d = String(v || '').replace(/\D/g, ''); if (d.length === 10 || d.length === 11) d = '55' + d; return d; }
 function safeEmail(e) { return String(e || '').toLowerCase().replace(/[.#$\[\]]/g, '_'); }
 function onlyDigits(v) { return String(v || '').replace(/\D/g, ''); }
-function tpath(p) { return legacyMode ? p : 'tenants/' + currentTenantId + '/' + p; }
-function settingsPath() { return legacyMode ? 'settings/main' : tpath('settings'); }
-function publicQuotePath(qid) { return legacyMode ? 'publicCotacoes/' + qid : 'publicQuotes/' + currentTenantId + '/' + qid; }
+function tpath(p) { return 'tenants/' + currentTenantId + '/' + p; }
+function settingsPath() { return tpath('settings'); }
+function publicQuotePath(qid) { return 'publicQuotes/' + currentTenantId + '/' + qid; }
 function supplierName(id) { return (suppliers[id] || fornecedores[id] || {}).name || (suppliers[id] || fornecedores[id] || {}).nome || id || ''; }
 function supplierPhone(id) { return (suppliers[id] || fornecedores[id] || {}).phone || (suppliers[id] || fornecedores[id] || {}).whatsapp || ''; }
 function normalizeDate(v) { if (!v) return ''; if (typeof v === 'number') return new Date(v).toLocaleString('pt-BR'); return String(v); }
@@ -90,47 +88,35 @@ async function signup() {
   const pass = $('loginPassword').value;
   if (!email || !pass) { $('loginError').textContent = 'Informe e-mail e senha.'; return; }
   const allowed = await db.ref('tenantEmailIndex/' + safeEmail(email)).once('value');
-  const legacyAllowed = await isLegacyAllowed(email);
-  if (!allowed.exists() && !legacyAllowed) { $('loginError').textContent = 'E-mail ainda não cadastrado pelo admin.'; return; }
+  const data = allowed.val() || {};
+  if (!allowed.exists() || data.active === false || !data.tenantId) { $('loginError').textContent = 'E-mail ainda n?o cadastrado em um tenant do Prec_IA.'; return; }
   try { await firebase.auth().createUserWithEmailAndPassword(email, pass); }
   catch (e) { $('loginError').textContent = e.message; }
-}
-async function isLegacyAllowed(email) {
-  const key = safeEmail(email);
-  const admin = await db.ref('adminEmails/' + key).once('value');
-  if (admin.exists()) return true;
-  const setup = await db.ref('clientSetup/adminEmail').once('value');
-  if (String(setup.val() || '').toLowerCase() === String(email || '').toLowerCase()) return true;
-  const sys = await db.ref('systemConfig/adminEmailKey').once('value');
-  if (String(sys.val() || '') === key) return true;
-  return false;
 }
 async function resolveTenant(email) {
   detachTenantListeners();
   const idx = await db.ref('tenantEmailIndex/' + safeEmail(email)).once('value');
-  if (idx.exists() && idx.val().active !== false) {
-    legacyMode = false;
-    currentTenantId = idx.val().tenantId;
-    currentTenant = (await db.ref('tenants/' + currentTenantId + '/meta').once('value')).val() || {};
-  } else if (await isLegacyAllowed(email)) {
-    legacyMode = true;
-    currentTenantId = 'legacy_root';
-    const s = (await db.ref('settings/main').once('value')).val() || {};
-    currentTenant = { tenantId: 'legacy_root', businessName: s.name || 'Estabelecimento atual', niche: s.niche || 'oficina', managerPhone: s.managerPhone || s.phone || '', city: s.city || '', globalPriceAccess: false, globalPricePublish: false, legacyRoot: true };
-  } else {
+  const data = idx.val() || {};
+  if (!idx.exists() || data.active === false || !data.tenantId) {
     firebase.auth().signOut();
-    $('loginError').textContent = 'E-mail não autorizado.';
+    $('loginError').textContent = 'E-mail n?o autorizado em nenhum tenant do Prec_IA.';
     return;
   }
-  $('tenantPill').textContent = legacyMode ? 'modo legado: raiz atual' : 'tenant: ' + currentTenantId;
+  currentTenantId = data.tenantId;
+  currentTenant = (await db.ref('tenants/' + currentTenantId + '/meta').once('value')).val() || {};
+  if (currentTenant.active === false) {
+    firebase.auth().signOut();
+    $('loginError').textContent = 'Tenant inativo no Prec_IA.';
+    return;
+  }
+  $('tenantPill').textContent = 'tenant: ' + currentTenantId;
   $('brandTitle').textContent = currentTenant.businessName || currentTenant.name || 'valor_IA';
   $('brandSubtitle').textContent = (currentTenant.niche || 'oficina') + ' - banco individual';
   listenTenant();
 }
 function detachTenantListeners() {
   if (!db) return;
-  ROOT_NODES.forEach(function(k) { db.ref(k).off(); });
-  if (currentTenantId && !legacyMode) db.ref('tenants/' + currentTenantId).off();
+  if (currentTenantId) db.ref('tenants/' + currentTenantId).off();
 }
 function listenTenant() {
   db.ref(settingsPath()).on('value', function(s) { settings = s.val() || {}; fillSettings(); renderAll(); });
@@ -486,7 +472,7 @@ function renderCompare(q) { return '<div class="card">' + getQuoteItems(q).map(f
 function renderSendPanel(q) { const sups = allSuppliers().filter(function(s) { return activeStatus(s.active); }); return '<div class="card"><h3>Enviar fornecedores</h3><div class="supplierChecks">' + sups.map(function(s) { return '<label><input type="checkbox" class="send_' + esc(q.id) + '" value="' + esc(s.id) + '"> ' + esc(s.name || s.nome) + ' - ' + esc(s.phone || s.whatsapp) + '</label>'; }).join('') + '</div><div class="actions"><button onclick="enqueueSelected(\'' + q.id + '\')">Enviar selecionados</button></div></div>'; }
 function renderRawReplies(q) { const raws = arr(q.whatsappRawReplies || q.rawWhatsapp || {}); return '<div class="card">' + (raws.length ? raws.map(function(r) { return '<pre>' + esc(r.text || r.raw || '') + '</pre>'; }).join('') : '<p class="muted">Sem respostas brutas vinculadas.</p>') + '</div>'; }
 function estimateProfit(q) { return getQuoteItems(q).reduce(function(total, it) { const b = bestFor(q, it); if (!b) return total; return total + Math.max(0, itemSaleTotal(it) - b.price * itemQty(it)); }, 0); }
-function enqueueSelected(qid) { const q = quotes[qid] || cotacoes[qid]; const checks = Array.prototype.slice.call(document.querySelectorAll('.send_' + qid + ':checked')); if (!checks.length) { alert('Selecione fornecedor.'); return; } const updates = {}; checks.forEach(function(c) { const s = suppliers[c.value] || fornecedores[c.value] || {}; const id = uid('wa'); const link = location.origin + location.pathname.replace(/index\.html.*$/, '') + 'fornecedor.html?t=' + encodeURIComponent(currentTenantId) + '&q=' + encodeURIComponent(qid) + '&s=' + encodeURIComponent(c.value) + (legacyMode ? '&legacy=1' : ''); const v = quoteVehicle(q); const msg = (settings.messageTemplate || DEFAULT_MSG).replaceAll('{fornecedor}', s.name || s.nome || '').replaceAll('{estabelecimento}', settings.name || currentTenant.businessName || '').replaceAll('{cotacao}', quoteNumber(q)).replaceAll('{veiculo}', v.model || v.modelo || '').replaceAll('{placa}', v.plate || v.placa || '').replaceAll('{chassi}', v.chassi || '').replaceAll('{qtd}', getQuoteItems(q).length).replaceAll('{link}', link).replaceAll('{assinatura}', SIGNATURE); updates[tpath('whatsappQueue/' + id)] = { id: id, tenantId: currentTenantId, legacyMode: legacyMode, quoteId: qid, cotacaoId: qid, quoteNumber: quoteNumber(q), supplierId: c.value, fornecedorId: c.value, supplierName: s.name || s.nome || '', fornecedorNome: s.name || s.nome || '', phone: s.phone || s.whatsapp || '', to: s.phone || s.whatsapp || '', message: msg, status: 'pending', createdAt: Date.now(), signature: SIGNATURE }; updates['whatsappContacts/' + onlyDigits(s.phone || s.whatsapp).replace(/^55/, '')] = { supplierId: c.value, phone: s.phone || s.whatsapp || '', lastQuoteId: qid, tenantId: currentTenantId, legacyMode: legacyMode, mappedAt: Date.now() }; }); db.ref().update(updates).then(function() { alert('Mensagens adicionadas à fila do robô.'); }); }
+function enqueueSelected(qid) { const q = quotes[qid] || cotacoes[qid]; const checks = Array.prototype.slice.call(document.querySelectorAll('.send_' + qid + ':checked')); if (!checks.length) { alert('Selecione fornecedor.'); return; } const updates = {}; checks.forEach(function(c) { const s = suppliers[c.value] || fornecedores[c.value] || {}; const id = uid('wa'); const link = location.origin + location.pathname.replace(/index\.html.*$/, '') + 'fornecedor.html?t=' + encodeURIComponent(currentTenantId) + '&q=' + encodeURIComponent(qid) + '&s=' + encodeURIComponent(c.value); const v = quoteVehicle(q); const msg = (settings.messageTemplate || DEFAULT_MSG).replaceAll('{fornecedor}', s.name || s.nome || '').replaceAll('{estabelecimento}', settings.name || currentTenant.businessName || '').replaceAll('{cotacao}', quoteNumber(q)).replaceAll('{veiculo}', v.model || v.modelo || '').replaceAll('{placa}', v.plate || v.placa || '').replaceAll('{chassi}', v.chassi || '').replaceAll('{qtd}', getQuoteItems(q).length).replaceAll('{link}', link).replaceAll('{assinatura}', SIGNATURE); updates[tpath('whatsappQueue/' + id)] = { id: id, tenantId: currentTenantId, quoteId: qid, cotacaoId: qid, quoteNumber: quoteNumber(q), supplierId: c.value, fornecedorId: c.value, supplierName: s.name || s.nome || '', fornecedorNome: s.name || s.nome || '', phone: s.phone || s.whatsapp || '', to: s.phone || s.whatsapp || '', message: msg, status: 'pending', createdAt: Date.now(), signature: SIGNATURE }; updates['whatsappContacts/' + onlyDigits(s.phone || s.whatsapp).replace(/^55/, '')] = { supplierId: c.value, phone: s.phone || s.whatsapp || '', lastQuoteId: qid, tenantId: currentTenantId, mappedAt: Date.now() }; }); db.ref().update(updates).then(function() { alert('Mensagens adicionadas à fila do robô.'); }); }
 function setQuoteStatus(id, status) { const path = quotes[id] ? tpath('quotes/' + id + '/status') : tpath('cotacoes/' + id + '/status'); db.ref(path).set(status); db.ref(publicQuotePath(id) + '/status').set(status); }
 function editQuote(id) { const q = quotes[id] || cotacoes[id]; if (!q) return; const v = quoteVehicle(q); $('quoteNumber').value = quoteNumber(q); $('vehCustomer').value = v.customer || v.cliente || ''; $('vehPlate').value = v.plate || v.placa || ''; $('vehChassi').value = v.chassi || ''; $('vehBrand').value = v.brand || v.marca || ''; $('vehModel').value = v.model || v.modelo || ''; $('vehYear').value = v.year || v.ano || ''; $('vehKm').value = v.km || ''; $('vehPrefix').value = v.prefix || v.prefixo || ''; $('vehObs').value = v.obs || ''; draftItems = getQuoteItems(q).map(function(i) { return { id: uid('item'), oem: itemCode(i), desc: itemDesc(i), qty: itemQty(i), saleUnit: itemSaleUnit(i), saleTotal: itemSaleTotal(i), type: i.type || i.tipo || '', obs: i.obs || i.observacao || '' }; }); renderDraft(); showTab('novo'); }
 function deleteQuote(id) { if (!confirm('Excluir cotação?')) return; const updates = {}; updates[tpath('quotes/' + id)] = null; updates[tpath('cotacoes/' + id)] = null; updates[publicQuotePath(id)] = null; db.ref().update(updates); }
@@ -509,6 +495,6 @@ function applyUnmatched(id, available) { const u = unmatched[id] || {}; const si
 function ignoreUnmatched(id) { db.ref(tpath('audit/unmatchedWhatsapp/' + id + '/status')).set('ignored'); }
 function deleteUnmatched(id) { db.ref(tpath('audit/unmatchedWhatsapp/' + id)).remove(); }
 function renderQueue() { $('robotStatusBox').innerHTML = '<p><b>Status:</b> ' + esc(robotStatus.status || 'não informado') + ' <span class="muted">' + esc(normalizeDate(robotStatus.updatedAt)) + '</span></p>'; $('robotQueue').innerHTML = arr(whatsappQueue).slice(-80).reverse().map(function(w) { return '<div class="quote"><b>' + esc(w.status) + '</b> - ' + esc(w.supplierName || w.fornecedorNome) + ' - ' + esc(w.phone || w.to) + '<br><span class="muted">' + esc(w.error || w.quoteId || w.cotacaoId || '') + '</span></div>'; }).join('') || '<p class="muted">Fila vazia.</p>'; }
-function renderDebug() { $('debugBox').innerHTML = '<ul><li>tenantId: ' + esc(currentTenantId) + '</li><li>modo legado raiz: ' + (legacyMode ? 'sim' : 'não') + '</li><li>Firebase conectado: ' + (!!db) + '</li><li>Usuário: ' + esc(currentUser && currentUser.email || '') + '</li><li>Nicho: ' + esc(currentTenant.niche || settings.niche || '') + '</li><li>suppliers: ' + Object.keys(suppliers).length + '</li><li>fornecedores legado: ' + Object.keys(fornecedores).length + '</li><li>priceDb: ' + Object.keys(priceDb).length + '</li><li>quotes: ' + Object.keys(quotes).length + '</li><li>cotacoes legado: ' + Object.keys(cotacoes).length + '</li><li>whatsappQueue: ' + Object.keys(whatsappQueue).length + '</li><li>audit/unmatchedWhatsapp: ' + Object.keys(unmatched).length + '</li></ul>'; }
+function renderDebug() { $('debugBox').innerHTML = '<ul><li>tenantId: ' + esc(currentTenantId) + '</li><li>modo tenant obrigatorio: sim</li><li>Firebase conectado: ' + (!!db) + '</li><li>Usuario: ' + esc(currentUser && currentUser.email || '') + '</li><li>Nicho: ' + esc(currentTenant.niche || settings.niche || '') + '</li><li>suppliers: ' + Object.keys(suppliers).length + '</li><li>fornecedores: ' + Object.keys(fornecedores).length + '</li><li>priceDb: ' + Object.keys(priceDb).length + '</li><li>quotes: ' + Object.keys(quotes).length + '</li><li>cotacoes: ' + Object.keys(cotacoes).length + '</li><li>whatsappQueue: ' + Object.keys(whatsappQueue).length + '</li><li>audit/unmatchedWhatsapp: ' + Object.keys(unmatched).length + '</li></ul>'; }
 function searchVehicleHistory() { const placa = ($('vehPlate') && $('vehPlate').value || '').toLowerCase(); const chassi = ($('vehChassi') && $('vehChassi').value || '').toLowerCase(); const cliente = ($('vehCustomer') && $('vehCustomer').value || '').toLowerCase(); const prefixo = ($('vehPrefix') && $('vehPrefix').value || '').toLowerCase(); if (!placa && !chassi && !cliente && !prefixo) { $('vehicleHistoryBox').innerHTML = ''; return; } const qlist = allQuotes().filter(function(q) { const v = quoteVehicle(q); return (placa && String(v.plate || v.placa || '').toLowerCase().indexOf(placa) >= 0) || (chassi && String(v.chassi || '').toLowerCase().indexOf(chassi) >= 0) || (cliente && String(v.customer || v.cliente || '').toLowerCase().indexOf(cliente) >= 0) || (prefixo && String(v.prefix || v.prefixo || '').toLowerCase().indexOf(prefixo) >= 0); }); const plist = arr(priceDb).filter(function(p) { return (placa && String(p.plate || '').toLowerCase().indexOf(placa) >= 0) || (chassi && String(p.chassi || '').toLowerCase().indexOf(chassi) >= 0); }).slice(-8); $('vehicleHistoryBox').innerHTML = (qlist.length || plist.length) ? '<div class="card"><h3>Histórico encontrado</h3><p class="muted">Veículo encontrado, últimas cotações, peças já orçadas, últimos preços, fornecedores usados e OCs relacionadas.</p>' + qlist.slice(0,8).map(function(q) { return '<div class="quote"><b>' + esc(quoteNumber(q)) + '</b><br>' + getQuoteItems(q).map(function(i) { return esc(itemDesc(i)); }).join('<br>') + '</div>'; }).join('') + plist.map(function(p) { return '<div class="quote"><b>' + esc(p.desc) + '</b><br>' + esc(p.oem) + ' - ' + money(p.price) + ' - ' + esc(supplierName(p.supplierId)) + '</div>'; }).join('') + '</div>' : ''; }
 function downloadText(name, text) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' })); a.download = name; a.click(); URL.revokeObjectURL(a.href); }
