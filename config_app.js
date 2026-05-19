@@ -126,6 +126,113 @@ function deleteTenant(id) {
 function renderGlobal() { const filter = $('globalFilter') && $('globalFilter').value || ''; let html = ''; Object.entries(globalDb || {}).forEach(function(entry) { const niche = entry[0], items = entry[1] || {}; if (filter && niche !== filter) return; html += '<h3>' + esc(niche) + '</h3>'; html += Object.values(items).slice(-50).map(function(p) { return '<div class="quote"><b>' + esc(p.desc || p.descricao || '') + '</b><br>' + esc(p.oem || '') + ' ' + esc(p.brand || '') + ' - ' + Number(p.price || p.preco || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) + '<br><span class="muted">origem anonimizada</span></div>'; }).join(''); }); $('globalList').innerHTML = html || '<p class="muted">Sem dados globais.</p>'; }
 function parseConfig(t) { t = String(t || '').trim().replace(/^const\s+firebaseConfig\s*=\s*/, '').replace(/;\s*$/, ''); return Function('return (' + t + ')')(); }
 function fillFromBlock() { try { const c = parseConfig($('cfg').value); ['apiKey','authDomain','databaseURL','projectId','storageBucket','messagingSenderId','appId'].forEach(function(k) { $(k).value = c[k] || ''; }); } catch(e) { alert('Não consegui ler o bloco Firebase.'); } }
-function generateFiles() { const tenantId = $('fileTenant').value || $('tenantId').value.trim(); const t = (tenants[tenantId] || {}).meta || tenantPayload(tenantId || 'tenant', $('tenantEmail').value.trim().toLowerCase()); const c = { apiKey: $('apiKey').value, authDomain: $('authDomain').value, databaseURL: $('databaseURL').value, projectId: $('projectId').value, storageBucket: $('storageBucket').value, messagingSenderId: $('messagingSenderId').value, appId: $('appId').value }; generatedFirebase = 'const firebaseConfig = ' + JSON.stringify(c, null, 2) + ';\nif (typeof window !== "undefined") window.firebaseConfig = firebaseConfig;\nif (typeof module !== "undefined") module.exports = firebaseConfig;\n'; generatedRobot = JSON.stringify({ tenantId: t.tenantId || tenantId, siteUrl: $('siteUrl').value, managerPhone: t.managerPhone || '', dailyLimit: 100, sendIntervalMs: 9000, signature: SIGNATURE }, null, 2); generatedNotes = 'DADOS DO CLIENTE - valor_IA\n\nEstabelecimento: ' + (t.businessName || '') + '\nTenant ID: ' + (t.tenantId || tenantId) + '\nE-mail autorizado: ' + (t.email || '') + '\nNicho: ' + (t.niche || '') + '\nWhatsApp gestor: ' + (t.managerPhone || '') + '\nGitHub Pages: ' + $('siteUrl').value + '\nFirebase projectId: ' + c.projectId + '\nDatabase URL: ' + c.databaseURL + '\n\nO cliente cria a própria senha no index.html usando o e-mail autorizado.\n'; $('filePreview').textContent = generatedFirebase + '\n' + generatedRobot + '\n' + generatedNotes; }
+function fileTenantContext() {
+  const tenantId = $('fileTenant').value || $('tenantId').value.trim();
+  const fallbackEmail = $('tenantEmail').value.trim().toLowerCase();
+  const t = (tenants[tenantId] || {}).meta || tenantPayload(tenantId || 'tenant', fallbackEmail);
+  const id = t.tenantId || tenantId || slug(t.businessName || fallbackEmail || 'tenant');
+  return { tenantId: id, tenant: t };
+}
+function currentFirebaseConfigFiles() {
+  return {
+    apiKey: $('apiKey').value.trim(),
+    authDomain: $('authDomain').value.trim(),
+    databaseURL: $('databaseURL').value.trim(),
+    projectId: $('projectId').value.trim(),
+    storageBucket: $('storageBucket').value.trim(),
+    messagingSenderId: $('messagingSenderId').value.trim(),
+    appId: $('appId').value.trim()
+  };
+}
+function buildFileArtifacts() {
+  const ctx = fileTenantContext();
+  const t = ctx.tenant;
+  const tenantId = ctx.tenantId;
+  const siteUrl = $('siteUrl').value.trim();
+  const c = currentFirebaseConfigFiles();
+  generatedFirebase = 'const firebaseConfig = ' + JSON.stringify(c, null, 2) + ';\nif (typeof window !== "undefined") window.firebaseConfig = firebaseConfig;\nif (typeof module !== "undefined") module.exports = firebaseConfig;\n';
+  generatedRobot = JSON.stringify({
+    tenantId: tenantId,
+    legacyMode: false,
+    watchAllTenants: false,
+    siteUrl: siteUrl,
+    managerPhone: t.managerPhone || '',
+    dailyLimit: 100,
+    sendIntervalMs: 9000,
+    signature: SIGNATURE
+  }, null, 2);
+  generatedNotes = 'DADOS DO CLIENTE - valor_IA\n\n' +
+    'Estabelecimento: ' + (t.businessName || '') + '\n' +
+    'Tenant ID: ' + tenantId + '\n' +
+    'E-mail autorizado: ' + (t.email || '') + '\n' +
+    'Nicho: ' + (t.niche || '') + '\n' +
+    'WhatsApp gestor: ' + (t.managerPhone || '') + '\n' +
+    'GitHub Pages: ' + siteUrl + '\n' +
+    'Firebase projectId: ' + c.projectId + '\n' +
+    'Database URL: ' + c.databaseURL + '\n\n' +
+    'INSTALACAO DO ROBO NO PC DO CLIENTE\n' +
+    '1. Extraia o ZIP na Area de Trabalho.\n' +
+    '2. Abra a pasta gerada e execute INSTALAR_E_ABRIR_ROBO_VALORIA.bat.\n' +
+    '3. Leia o QR Code no WhatsApp quando o painel abrir.\n' +
+    '4. Para iniciar com Windows, execute INSTALAR_ROBO_INICIAR_COM_WINDOWS.bat.\n' +
+    '5. Para trocar o WhatsApp, execute RESETAR_QR_CODE_ROBO.bat.\n\n' +
+    'O robo deste pacote trabalha em tenants/' + tenantId + '/whatsappQueue.\n';
+  return { tenantId, tenant: t, firebaseConfig: c, siteUrl };
+}
+function generateFiles() {
+  buildFileArtifacts();
+  $('filePreview').textContent = generatedFirebase + '\n' + generatedRobot + '\n' + generatedNotes;
+}
 function downloadFile(name, text) { if (!text) { alert('Gere primeiro.'); return; } const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' })); a.download = name; a.click(); URL.revokeObjectURL(a.href); }
+function safeFolderName(v) {
+  return String(v || 'Cliente').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[<>:"/\\|?*\x00-\x1F]+/g, ' ').replace(/\s+/g, ' ').trim() || 'Cliente';
+}
+function safeZipName(v) {
+  return safeFolderName(v).replace(/\s+/g, '_');
+}
+const ROBO_TEMPLATE_FILES = [
+  'ABRIR_PAINEL_ROBO.bat',
+  'INSTALAR_E_ABRIR_ROBO_VALORIA.bat',
+  'INSTALAR_ROBO_INICIAR_COM_WINDOWS.bat',
+  'REMOVER_ROBO_DA_INICIALIZACAO.bat',
+  'RESETAR_QR_CODE_ROBO.bat',
+  'README_PC_CLIENTE.txt',
+  'robo-whatsapp/package.json',
+  'robo-whatsapp/package-lock.json',
+  'robo-whatsapp/server.js'
+];
+async function fetchRoboTemplateFile(rel) {
+  const resp = await fetch('assets/robo-template/' + rel + '?v=' + Date.now(), { cache: 'no-store' });
+  if (!resp.ok) throw new Error('Template do robo nao encontrado: ' + rel);
+  return resp.text();
+}
+function downloadBlob(name, blob) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(function() { URL.revokeObjectURL(a.href); }, 1000);
+}
+async function downloadRoboPackage() {
+  try {
+    if (typeof JSZip === 'undefined') { alert('Biblioteca local JSZip nao carregou. Verifique assets/vendor/jszip.min.js.'); return; }
+    const ctx = buildFileArtifacts();
+    if (!ctx.tenantId) { alert('Selecione ou preencha o tenant antes de gerar o pacote.'); return; }
+    if (!ctx.firebaseConfig.databaseURL || !ctx.firebaseConfig.projectId) { alert('Preencha o Firebase config do Prec_IA antes de gerar o pacote.'); return; }
+    const folderName = 'thIAguinho Cotacao - ' + safeFolderName(ctx.tenant.businessName || ctx.tenantId);
+    const zip = new JSZip();
+    const root = zip.folder(folderName);
+    const texts = await Promise.all(ROBO_TEMPLATE_FILES.map(function(rel) { return fetchRoboTemplateFile(rel).then(function(text) { return { rel, text }; }); }));
+    texts.forEach(function(item) { root.file(item.rel, item.text); });
+    root.file('firebase-config.js', generatedFirebase);
+    root.file('robo-config.json', generatedRobot);
+    root.file('DADOS_DO_CLIENTE.txt', generatedNotes);
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+    downloadBlob(safeZipName(folderName) + '.zip', blob);
+    $('filePreview').textContent = generatedFirebase + '\n' + generatedRobot + '\n' + generatedNotes + '\n\nPACOTE COMPLETO GERADO: ' + folderName + '.zip';
+  } catch (e) {
+    console.error(e);
+    alert('Erro ao gerar pacote completo do robo: ' + (e.message || e));
+  }
+}
 function renderDiag() { const statsHtml = Object.entries(tenantStats).map(function(e) { return '<li>' + esc(e[0]) + ': ' + esc(e[1]) + '</li>'; }).join(''); $('diagBox').innerHTML = '<ul><li>Admin: ' + esc(adminUser && adminUser.email || '') + '</li><li>Tenants cadastrados: ' + Object.keys(tenants || {}).length + '</li><li>Nichos globais: ' + Object.keys(globalDb || {}).length + '</li><li>Nichos disponiveis: ' + NICHOS.length + '</li></ul><h3>Estrutura multi-tenant Prec_IA</h3><p class="muted">Cotacoes, fornecedores, veiculos, fila do robo e respostas ficam sempre em tenants/{tenantId}. Links publicos usam publicQuotes/{tenantId}/{quoteId}.</p><ul>' + (statsHtml || '<li>Sem dados carregados.</li>') + '</ul>'; }
